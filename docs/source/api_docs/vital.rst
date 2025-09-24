@@ -4,6 +4,20 @@
 .. automodule:: vital
 
    
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      BatteryCharging
+      ConstantsGlobal
+      ConstantsUnitConversion
+      ConstraintChecker
+      LCOE
+      RotorData
+      RotorSimulation
+      TidalData
+      VesselData
+   
 .. rubric:: Modules
 
 .. autosummary::

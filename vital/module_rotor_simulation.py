@@ -57,7 +57,7 @@ class RotorSimulation:
         dt = np.mean(np.diff(self.t))
 
         for kk in range(len(self.t)):
-            if self.attachment_method == 'cable':
+            if self.attachment_method == 'chain':
                 self.adjust_hub_depth(kk)
 
             if self.control_strategy == 'optimal':

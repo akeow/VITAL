@@ -1,4 +1,5 @@
 Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
+
 Copyright (c) 2001-2024 Python Software Foundation; All Rights Reserved  
 
 Licensed under the Apache License, Version 2.0 (the "License");

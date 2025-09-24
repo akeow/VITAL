@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme
+          pip install sphinx sphinx_rtd_theme nbsphinx ipykernel
       - name: Build Documentation
         run: sphinx-build -b html docs/source docs/build/html
       - name: Deploy to GitHub Pages
