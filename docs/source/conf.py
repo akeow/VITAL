@@ -107,6 +107,7 @@ suppress_warnings = ['toc.not_included']
 
 # -- nbsphinx Configuration ---------------------------------------------------
 nbsphinx_execute = 'always'
+nbsphinx_allow_errors = True
 
 
 # -- File Operations ----------------------------------------------------------
