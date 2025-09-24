@@ -11,13 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+
       - name: Install dependencies
-        run:
+        run: |
           pip install --upgrade pip
           pip install .  # Install the vital package
           pip install sphinx sphinx_rtd_theme nbsphinx ipykernel
+
       - name: Build Documentation
         run: sphinx-build -b html docs/source docs/build/html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
