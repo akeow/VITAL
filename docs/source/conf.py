@@ -41,7 +41,9 @@ extensions = [
 ]
 
 autosummary_generate = True
-autosummary_imported_members = True
+autosummary_generate_overwrite = True
+autosummary_ignore_modules = ['vital.constGlobal', 'vital.constUnitConvert']
+
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']

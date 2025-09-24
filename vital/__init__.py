@@ -1,10 +1,19 @@
-# vital/__init__.py
+"""
+vital: A package for managing tidal energy systems, rotor simulations, vessel data, and more.
 
-# Import constants (if needed globally)
+This package provides modules for:
+- Handling tidal data
+- Rotor simulations
+- Constraint checking
+- Vessel operations
+- Levelized cost of energy (LCOE) calculations
+- Battery charging systems
+
+It also includes global physical constants and unit conversion constants for consistent calculations.
+"""
+
 from .constUnitConvert import ConstantsUnitConversion
 from .constGlobal import ConstantsGlobal
-
-# Import modules
 from .module_tidal import TidalData
 from .module_rotor import RotorData
 from .module_rotor_simulation import RotorSimulation
@@ -13,12 +22,15 @@ from .module_vessel import VesselData
 from .module_lcoe import LCOE
 from .module_battery_charging import BatteryCharging
 
-# Initialize constants (if needed globally)
-CONVERT = ConstantsUnitConversion()
+# Initialize global constants for physical properties
 GLOBAL = ConstantsGlobal()
+
+# Initialize unit conversion constants
+CONVERT = ConstantsUnitConversion()
 
 # Expose the classes and constants directly
 __all__ = [
+    # Classes
     "TidalData",
     "RotorData",
     "RotorSimulation",
@@ -26,6 +38,8 @@ __all__ = [
     "VesselData",
     "LCOE",
     "BatteryCharging",
+    
+    # Constants
     "CONVERT",
     "GLOBAL",
 ]

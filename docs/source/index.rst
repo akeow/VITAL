@@ -19,6 +19,8 @@ Sandia National Laboratories is a multi-mission laboratory managed and operated 
 .. _Sandia National Laboratories: https://www.sandia.gov
 
 
+Theory
+========
 
 .. toctree::
    :maxdepth: 2
@@ -26,9 +28,12 @@ Sandia National Laboratories is a multi-mission laboratory managed and operated 
 
    constraint
 
+Examples
+========
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Examples:
 
    examples/code_demo
 
@@ -37,5 +42,6 @@ API Documentation
 
 .. autosummary::
    :toctree: api_docs
-   :recursive:
    :nosignatures:
+
+   vital
