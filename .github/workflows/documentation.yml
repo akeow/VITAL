@@ -18,6 +18,9 @@ jobs:
           pip install .  # Install the vital package
           pip install sphinx sphinx_rtd_theme nbsphinx ipykernel
 
+      - name: Install Pandoc
+        run: sudo apt-get install pandoc
+
       - name: Build Documentation
         run: sphinx-build -b html docs/source docs/build/html
 
