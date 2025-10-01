@@ -37,6 +37,7 @@ docs/source/.doctrees/
 
 # Test files
 test/
+OldCode/
 
 # Build artifacts
 dist/

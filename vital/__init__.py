@@ -19,8 +19,8 @@ from .module_rotor import RotorData
 from .module_rotor_simulation import RotorSimulation
 from .module_constraint_checker import ConstraintChecker
 from .module_vessel import VesselData
-from .module_lcoe import LCOE
-from .module_battery_charging import BatteryCharging
+from .module_lcoe import LCOEData,LCOECalculator
+from .module_lcoe_optimizer import LCOEOptimizer
 
 # Initialize global constants for physical properties
 GLOBAL = ConstantsGlobal()
@@ -36,9 +36,9 @@ __all__ = [
     "RotorSimulation",
     "ConstraintChecker",
     "VesselData",
-    "LCOE",
-    "BatteryCharging",
-    
+    "LCOEData",
+    "LCOECalculator",
+    "LCOEOptimizer",
     # Constants
     "CONVERT",
     "GLOBAL",

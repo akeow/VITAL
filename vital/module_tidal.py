@@ -1,3 +1,13 @@
+"""
+module_tidal.py
+
+This module provides tools for working with tidal data, including the `TidalData` class and utility functions.
+
+Key Features:
+- Retrieve station information, deployment data, and tidal predictions from NOAA APIs.
+- Calculate cable lengths to the nearest city based on geographic data.
+- Process tidal data using interpolation and filtering for analysis.
+"""
 import requests
 import math
 import datetime
@@ -5,10 +15,12 @@ import calendar
 import numpy as np
 from scipy.interpolate import PchipInterpolator
 import pandas as pd
+from dataclasses import dataclass
 
 from vital.constGlobal import ConstantsGlobal
 from vital.constUnitConvert import ConstantsUnitConversion
 
+# Constants
 GLOBAL = ConstantsGlobal()
 CONVERT = ConstantsUnitConversion()
 
@@ -21,15 +33,35 @@ DEFAULT_MOORING_DISTANCE_M = 50.0
 
 class TidalData:
     """
-    A class to represent tidal data.
-    ...
+    A class for retrieving and processing tidal data from NOAA APIs.
+
+    Attributes:
+        - station (str): NOAA station identifier.
+        - startdate (str): Start date for tidal data retrieval (format: 'YYYY-MM-DD').
+        - range_hrs (int): Range of hours for tidal data retrieval.
+        - time_step_s (float): Time step in seconds for interpolation.
+        - flow_speeds_m_s (np.ndarray): Array of flow speeds in meters per second.
+        - time_s (np.ndarray): Array of time steps in seconds.
+        - mooring_distance_m (float): Mooring distance in meters.
+        - buoy_latitude_rad (float): Latitude of the buoy in radians.
+        - buoy_longitude_rad (float): Longitude of the buoy in radians.
+        - station_name (str): Name of the NOAA station.
+        - nearest_city (str): Name of the nearest city to the buoy.
+        - electrical_cable_length_m (float): Length of the electrical cable in meters.
+
+    Methods:
+        - get_station_name(): Retrieves the name of the NOAA station.
+        - get_station_info(): Retrieves detailed information about the station.
+        - get_deployment_info(): Retrieves deployment data for the station.
+        - get_tidal_data(): Fetches tidal predictions from NOAA APIs.
+        - extract_tidal_speed(input_data): Extracts tidal speed values from NOAA data.
+        - extract_tidal_time(input_data): Extracts timestamps from NOAA data.
+        - distance(lat1, lat2, lon1, lon2): Calculates the great-circle distance between two geographic points.
+        - calCableLen(buoylat, buoylon, citytextfile): Calculates the cable length to the nearest city.
+        - load_tidal_data(city_data_file): Loads tidal data and calculates attributes.
     """
 
-    def __init__(self, station: str, startdate: str, range_hrs: int, time_step_s: float):
-        """
-        Constructs all the necessary attributes for the TidalData object.
-        ...
-        """
+    def __init__(self, station: str, startdate: str, range_hrs: int, time_step_s: float): 
         self.station: str = station
         self.startdate: str = startdate
         self.range_hrs: int = range_hrs
@@ -44,14 +76,15 @@ class TidalData:
         self.electrical_cable_length_m: float = None
         self.session = requests.Session()  # Use a session for requests
 
-    def __del__(self):
-        """Ensure the session is closed when the object is deleted."""
+    def __del__(self): 
         self.session.close()
 
     def get_station_name(self) -> str:
         """
-        Retrieves the name of the station.
-        ...
+        Retrieves the name of the NOAA station.
+
+        Returns:
+            str: The name of the station, or None if an error occurs.
         """
         url = f'{NOAA_API_BASE_URL}/{self.station}.json'
         try:
@@ -66,7 +99,9 @@ class TidalData:
     def get_station_info(self) -> dict:
         """
         Retrieves information about the station.
-        ...
+
+        Returns:
+            dict: Station information, or an empty dictionary if an error occurs.
         """
         url = f"{NOAA_API_BASE_URL}/{self.station}.json"
         try:
@@ -80,7 +115,9 @@ class TidalData:
     def get_deployment_info(self) -> dict:
         """
         Retrieves deployment information for the station.
-        ...
+
+        Returns:
+            dict: Deployment information, or an empty dictionary if an error occurs.
         """
         url = f"{NOAA_API_BASE_URL}/{self.station}/deployments.json"
         try:
@@ -94,7 +131,9 @@ class TidalData:
     def get_tidal_data(self) -> dict:
         """
         Retrieves tidal data for the station.
-        ...
+
+        Returns:
+            dict: Tidal data, or an empty dictionary if an error occurs.
         """
         range_hrs_extended = self.range_hrs + 2
         url = (f'{NOAA_TIDAL_DATA_URL}?station={self.station}&begin_date={self.startdate}&range={range_hrs_extended}'
@@ -110,7 +149,12 @@ class TidalData:
     def extract_tidal_speed(self, input_data: dict) -> list:
         """
         Extracts tidal speed data from the input data.
-        ...
+
+        Args:
+            input_data (dict): A dictionary containing tidal data retrieved from NOAA APIs.
+
+        Returns:
+            list: A list of tidal speed values extracted from the input data.
         """
         if self.station.lower().startswith('pct'):
             return [x['Velocity_Major'] for x in input_data['current_predictions']['cp']]
@@ -120,7 +164,12 @@ class TidalData:
     def extract_tidal_time(self, input_data: dict) -> list:
         """
         Extracts tidal time data from the input data.
-        ...
+
+        Args:
+            input_data (dict): A dictionary containing tidal data retrieved from NOAA APIs.
+
+        Returns:
+            list: A list of timestamps (in seconds since epoch) extracted from the input data.
         """
         tidal_time_string = [x['Time'] for x in input_data['current_predictions']['cp']]
         date_obj = [datetime.datetime.strptime(x, '%Y-%m-%d %H:%M') for x in tidal_time_string]
@@ -129,7 +178,15 @@ class TidalData:
     def distance(self, lat1: float, lat2: float, lon1: float, lon2: float) -> float:
         """
         Calculates the great-circle distance between two points on the Earth.
-        ...
+
+        Args:
+            lat1 (float): Latitude of the first point in radians.
+            lat2 (float): Latitude of the second point in radians.
+            lon1 (float): Longitude of the first point in radians.
+            lon2 (float): Longitude of the second point in radians.
+
+        Returns:
+            float: The great-circle distance between the two points in meters.
         """
         dlon = lon2 - lon1
         dlat = lat2 - lat1
@@ -139,8 +196,15 @@ class TidalData:
 
     def calCableLen(self, buoylat: float, buoylon: float, citytextfile: str) -> tuple:
         """
-        Calculates the cable length from a buoy to the closest city listed in a text file.
-        ...
+        Calculates the cable length from the buoy to the nearest city.
+
+        Args:
+            buoylat (float): Latitude of the buoy in radians.
+            buoylon (float): Longitude of the buoy in radians.
+            citytextfile (str): Path to the text file containing city data.
+
+        Returns:
+            tuple: (cable_length (float), nearest_city (str)).
         """
         datafile = pd.read_table(citytextfile, delimiter=",", comment='#')
         d_cable_len = np.zeros(len(datafile))
@@ -164,7 +228,20 @@ class TidalData:
     def load_tidal_data(self, city_data_file: str) -> tuple:
         """
         Loads tidal data and calculates the necessary attributes.
-        ...
+
+        Args:
+            city_data_file (str): Path to the text file containing city data (latitude, longitude, and name).
+
+        Returns:
+            tuple: A tuple containing:
+                - np.ndarray: Array of flow speeds in meters per second.
+                - np.ndarray: Array of time steps in seconds.
+                - float: Mooring distance in meters.
+                - float: Latitude of the buoy in radians.
+                - float: Longitude of the buoy in radians.
+                - str: Name of the NOAA station.
+                - str: Name of the nearest city to the buoy.
+                - float: Length of the electrical cable in meters.
         """
         self.station_name = self.get_station_name()
 
@@ -201,3 +278,84 @@ class TidalData:
         self.electrical_cable_length_m, self.nearest_city = self.calCableLen(self.buoy_latitude_rad, self.buoy_longitude_rad, city_data_file)
 
         return self.flow_speeds_m_s, self.time_s, self.mooring_distance_m, self.buoy_latitude_rad, self.buoy_longitude_rad, self.station_name, self.nearest_city, self.electrical_cable_length_m
+
+def create_tidal_data(station: str, startdate: str, range_hrs: int, time_step_s: float) -> TidalData:
+    """
+    Creates and initializes a TidalData instance.
+
+    Args:
+        station (str): NOAA station identifier.
+        startdate (str): Start date for tidal data retrieval (format: 'YYYY-MM-DD').
+        range_hrs (int): Range of hours for tidal data retrieval.
+        time_step_s (float): Time step in seconds for interpolation.
+
+    Returns:
+        TidalData: An instance of the TidalData class.
+    """
+    return TidalData(station, startdate, range_hrs, time_step_s)
+
+def process_tidal_data(
+    station: str,
+    startdate: str,
+    range_hrs: int = 2 * 7 * 24,  # Default: 2 weeks
+    time_step_s: int = 3600,  # Default: 1 hour
+    city_data_file: str = "../data/AlaskaCityLatLong.txt"
+) -> tuple:
+    """
+    Processes tidal data in one step.
+
+    Args:
+        station (str): NOAA station identifier (e.g., "SEA0801").
+        startdate (str): Start date for tidal data retrieval (format: 'YYYY-MM-DD').
+        range_hrs (int, optional): Range of hours for tidal data retrieval. Default is 2 weeks.
+        time_step_s (int, optional): Time step in seconds for interpolation. Default is 1 hour.
+        city_data_file (str, optional): Path to the city data file containing latitude, longitude, and city names.
+
+    Returns:
+        tuple: Contains the following:
+            - flow_speeds (np.ndarray): Array of flow speeds in meters per second.
+            - times (np.ndarray): Array of time steps in seconds.
+            - mooring_distance (float): Mooring distance in meters.
+            - latitude (float): Latitude of the buoy in radians.
+            - longitude (float): Longitude of the buoy in radians.
+            - station_name (str): Name of the NOAA station.
+            - nearest_city (str): Name of the nearest city to the buoy.
+            - cable_length (float): Length of the electrical cable in meters.
+
+    Raises:
+        ValueError: If the city data file is not found or if there is an error processing tidal data.
+    """
+    try:
+        tidal_data = create_tidal_data(station, startdate, range_hrs, time_step_s)
+        results = tidal_data.load_tidal_data(city_data_file)
+        return TidalResults(*results)
+    except FileNotFoundError:
+        raise ValueError(f"City data file not found: {city_data_file}")
+    except ValueError as e:
+        raise ValueError(f"Error processing tidal data: {e}")
+    except Exception as e:
+        raise ValueError(f"An unexpected error occurred: {e}")
+
+@dataclass
+class TidalResults:
+    """
+    A data class to store the results of tidal data processing.
+
+    Attributes:
+        flow_speeds (list): Array of flow speeds in meters per second.
+        times (list): Array of time steps in seconds.
+        mooring_distance (float): Mooring distance in meters.
+        latitude (float): Latitude of the buoy in radians.
+        longitude (float): Longitude of the buoy in radians.
+        station_name (str): Name of the NOAA station.
+        nearest_city (str): Name of the nearest city to the buoy.
+        cable_length (float): Length of the electrical cable in meters.
+    """
+    flow_speeds: list
+    times: list
+    mooring_distance: float
+    latitude: float
+    longitude: float
+    station_name: str
+    nearest_city: str
+    cable_length: float
