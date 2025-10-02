@@ -36,7 +36,7 @@ This command will install all the required packages listed in the `environment.y
     conda activate VITAL_env
     ```
 
-This command will activate the newly created environment named "VITAL_env". You should see the environment name in your terminal prompt.
+This command will activate the newly created environment named `VITAL_env`. You should see the environment name in your terminal prompt.
 
 5. You have successfully set up the Python environment using Conda! Now you can run the tutorial within this environment.
 
@@ -72,18 +72,18 @@ conda deactivate
 conda env remove --name VITAL_env
 ```
 
-This command will remove the "VITAL_env" environment and all its associated packages.
+This command will remove the `VITAL_env` environment and all its associated packages.
 
 # Launching Jupyter Notebook from the Command Line
 ## Instructions
 1. Open a terminal or command prompt.
 
-2. Activate the "VITAL_env" Conda environment using the following command:
+2. Activate the `VITAL_env` Conda environment using the following command:
 ```
 conda activate VITAL_env
 ```
 
-This command will activate the "VITAL_env" environment, ensuring that you are using the correct Python environment for running Jupyter Notebook.
+This command will activate the `VITAL_env` environment, ensuring that you are using the correct Python environment for running Jupyter Notebook.
 
 3. Navigate to the directory where you want to create or open your Jupyter Notebook.
 
