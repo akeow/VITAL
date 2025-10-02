@@ -4,11 +4,12 @@ module_constraint_checker.py
 This module provides tools for checking various constraints for turbine and vessel configurations, including power, depth, cavitation, and pitch stability.
 
 Key Features:
-- Validate turbine and vessel performance against power constraints.
-- Ensure rotor depth is sufficient for submersion.
-- Check cavitation constraints based on pressure coefficients and flow speeds.
-- Verify pitch stability constraints for vessel operation.
+    * Validate turbine and vessel performance against power constraints.
+    * Ensure rotor depth is sufficient for submersion.
+    * Check cavitation constraints based on pressure coefficients and flow speeds.
+    * Verify pitch stability constraints for vessel operation.
 """
+
 import numpy as np
 from vital.constGlobal import ConstantsGlobal
 import matplotlib.pyplot as plt
@@ -19,36 +20,36 @@ plt.style.use('tableau-colorblind10')
 class ConstraintChecker:
     """
     A class for checking various constraints for turbine and vessel configurations.
-
-    Attributes:
-        - Radius (float): Rotor radius in meters.
-        - dHub (float): Hub depth in meters.
-        - Prated (float): Rated power in watts.
-        - number_of_turbines (int): Number of turbines in the system.
-        - CpminFunc (function): Function to calculate Cpmin (minimum pressure coefficient) based on TSR.
-        - GLOBAL (ConstantsGlobal): Global constants for physical properties.
-        - TSR (np.ndarray): Tip-speed ratio over time from simulation results.
-        - Uinf_adjusted (np.ndarray): Adjusted flow speeds over time from simulation results.
-        - Pelec (np.ndarray): Electrical power over time from simulation results.
-        - Ft (np.ndarray): Thrust forces over time from simulation results.
-        - wr (np.ndarray): Rotor angular velocity over time from simulation results.
-        - Kphi (float): Vessel pitch hydrostatic stiffness.
-        - phi (float): Vessel pitch angle in radians.
-        - theta_m (float): Mooring line angle in radians.
-        - area (float): Cross-sectional area of the vessel.
-        - Xm (float): Horizontal distance from the center of rotation.
-        - Zm (float): Vertical distance from the center of rotation.
-
-    Methods:
-        - power_constraint(): Calculates power constraint values.
-        - check_power_constraint(): Checks if power constraint is satisfied.
-        - depth_constraint(): Calculates depth constraint values.
-        - check_depth_constraint(): Checks if depth constraint is satisfied.
-        - cavitation_constraint(): Calculates cavitation constraint values.
-        - check_cavitation_constraint(): Checks if cavitation constraint is satisfied.
-        - pitch_constraint(): Calculates pitch constraint values.
-        - check_pitch_constraint(): Checks if pitch constraint is satisfied.
     """
+    # Attributes:
+    #     Radius (float): Rotor radius in meters.
+    #     dHub (float): Hub depth in meters.
+    #     Prated (float): Rated power in watts.
+    #     number_of_turbines (int): Number of turbines in the system.
+    #     CpminFunc (function): Function to calculate Cpmin (minimum pressure coefficient) based on TSR.
+    #     GLOBAL (ConstantsGlobal): Global constants for physical properties.
+    #     TSR (np.ndarray): Tip-speed ratio over time from simulation results.
+    #     Uinf_adjusted (np.ndarray): Adjusted flow speeds over time from simulation results.
+    #     Pelec (np.ndarray): Electrical power over time from simulation results.
+    #     Ft (np.ndarray): Thrust forces over time from simulation results.
+    #     wr (np.ndarray): Rotor angular velocity over time from simulation results.
+    #     Kphi (float): Vessel pitch hydrostatic stiffness.
+    #     phi (float): Vessel pitch angle in radians.
+    #     theta_m (float): Mooring line angle in radians.
+    #     area (float): Cross-sectional area of the vessel.
+    #     Xm (float): Horizontal distance from the center of rotation.
+    #     Zm (float): Vertical distance from the center of rotation.
+
+    # Methods:
+    #     power_constraint(): Calculates power constraint values.
+    #     check_power_constraint(): Checks if the power constraint is satisfied.
+    #     depth_constraint(): Calculates depth constraint values.
+    #     check_depth_constraint(): Checks if the depth constraint is satisfied.
+    #     cavitation_constraint(): Calculates cavitation constraint values.
+    #     check_cavitation_constraint(): Checks if the cavitation constraint is satisfied.
+    #     pitch_constraint(): Calculates pitch constraint values.
+    #     check_pitch_constraint(): Checks if the pitch constraint is satisfied.
+
 
     def __init__(self, rotorData, turbineConfig, vesselConfig, simResult):
         """

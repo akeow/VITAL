@@ -4,35 +4,34 @@ module_cost_calculations.py
 This module provides cost calculation functions for various components of tidal energy systems, including rotor, drivetrain, electrical cables, mooring, and battery systems.
 
 Key Features:
--------------
-- Calculate costs for rotor and drivetrain components.
-- Estimate costs for electrical cables, mooring systems, and grid connections.
-- Support SITKANA-specific cost calculations for batteries, platforms, anchors, and charge controllers.
-- Provide operating cost calculations for SITKANA systems.
+    - Calculate costs for rotor and drivetrain components.
+    - Estimate costs for electrical cables, mooring systems, and grid connections.
+    - Support SITKANA-specific cost calculations for batteries, platforms, anchors, and charge controllers.
+    - Provide operating cost calculations for SITKANA systems.
 
 Functions:
-----------
-- calculate_electrical_cable_cost(): Calculates the cost of electrical cables.
-- calculate_mooring_cost(): Calculates the cost of mooring systems.
-- calculate_grid_connection_cost(): Calculates the cost of grid connection systems.
-- calculate_blade_cost(): Calculates the cost of turbine blades.
-- calculate_generator_cost(): Calculates the cost of turbine generators.
-- calculate_misc_cost(): Calculates miscellaneous electrical component costs.
-- calculate_hub_cost(): Calculates the cost of farm hub platforms.
-- calculate_cable_installation_cost(): Calculates the cost of cable installation.
-- SITKANA-specific functions:
-    - calculate_rotor_cost_SITKANA(): Calculates rotor costs for SITKANA systems.
-    - calculate_rotor_construction_cost_SITKANA(): Calculates rotor construction costs for SITKANA systems.
-    - calculate_steel_component_cost_SITKANA(): Calculates steel component costs for SITKANA systems.
-    - calculate_generator_cost_SITKANA(): Calculates generator costs for SITKANA systems.
-    - calculate_assembly_cost_SITKANA(): Calculates assembly costs for SITKANA systems.
-    - calculate_concrete_cost_SITKANA(): Calculates concrete costs for SITKANA systems.
-    - calculate_gearbox_cost_SITKANA(): Calculates gearbox costs for SITKANA systems.
-    - calculate_charge_controller_cost_SITKANA(): Calculates charge controller costs for SITKANA systems.
-    - calculate_platform_cost_SITKANA(): Calculates platform costs for SITKANA systems.
-    - calculate_anchor_cost_SITKANA(): Calculates anchor costs for SITKANA systems.
-    - calculate_battery_cost_SITKANA(): Calculates battery costs for SITKANA systems.
-- operating_cost_SITKANA(): Calculates operating costs for SITKANA systems.
+    calculate_electrical_cable_cost(): Calculates the cost of electrical cables.
+    calculate_mooring_cost(): Calculates the cost of mooring systems.
+    calculate_grid_connection_cost(): Calculates the cost of grid connection systems.
+    calculate_blade_cost(): Calculates the cost of turbine blades.
+    calculate_generator_cost(): Calculates the cost of turbine generators.
+    calculate_misc_cost(): Calculates miscellaneous electrical component costs.
+    calculate_hub_cost(): Calculates the cost of farm hub platforms.
+    calculate_cable_installation_cost(): Calculates the cost of cable installation.
+
+    SITKANA-specific functions:
+        calculate_rotor_cost_SITKANA(): Calculates rotor costs for SITKANA systems.
+        calculate_rotor_construction_cost_SITKANA(): Calculates rotor construction costs for SITKANA systems.
+        calculate_steel_component_cost_SITKANA(): Calculates steel component costs for SITKANA systems.
+        calculate_generator_cost_SITKANA(): Calculates generator costs for SITKANA systems.
+        calculate_assembly_cost_SITKANA(): Calculates assembly costs for SITKANA systems.
+        calculate_concrete_cost_SITKANA(): Calculates concrete costs for SITKANA systems.
+        calculate_gearbox_cost_SITKANA(): Calculates gearbox costs for SITKANA systems.
+        calculate_charge_controller_cost_SITKANA(): Calculates charge controller costs for SITKANA systems.
+        calculate_platform_cost_SITKANA(): Calculates platform costs for SITKANA systems.
+        calculate_anchor_cost_SITKANA(): Calculates anchor costs for SITKANA systems.
+        calculate_battery_cost_SITKANA(): Calculates battery costs for SITKANA systems.
+        operating_cost_SITKANA(): Calculates operating costs for SITKANA systems.
 """
 
 import numpy as np

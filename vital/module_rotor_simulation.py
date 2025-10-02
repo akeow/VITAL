@@ -1,56 +1,57 @@
 """
 module_rotor_simulation.py
 
-This module provides tools for simulating rotor dynamics and calculating turbine performance metrics, including mechanical power, electrical power, torque, and thrust force.
+This module provides tools for simulating rotor dynamics and calculating turbine performance metrics, including mechanical power, electrical power, speed, torque, and thrust force.
 
 Key Features:
-- Simulate turbine dynamics under varying flow speeds and depths.
-- Calculate hydro torque, thrust force, and power metrics (mechanical, electrical, fluid).
-- Handle closed-loop and open-loop turbine dynamics.
-- Adjust flow speed based on hub depth and mooring depth.
-- Retrieve simulation results for analysis and visualization.
+    Simulate turbine dynamics under varying flow speeds and depths.
+    Calculate hydro torque, thrust force, and power metrics (mechanical, electrical, fluid).
+    Handle closed-loop and open-loop turbine dynamics.
+    Adjust flow speed based on hub depth and mooring depth.
+    Retrieve simulation results for analysis and visualization.
 """
 import numpy as np
 from vital.constGlobal import ConstantsGlobal
 import scipy as sp
-from vital.unit_weight import UnitWeight  # Import the function from the new file
+# from vital.unit_weight import UnitWeight  # Import the function from the new file
+import matplotlib.pyplot as plt
 
 
 class RotorSimulation:
     """
     A class for simulating rotor dynamics and calculating turbine performance metrics.
-
-    Attributes:
-        - Radius (float): Rotor radius in meters.
-        - Prated (float): Rated power in watts.
-        - Trated (float): Rated torque in Nm.
-        - dHub (float): Hub depth in meters.
-        - dMoor (float): Mooring depth in meters.
-        - Uinf (np.ndarray): Flow speeds at the surface in m/s.
-        - t (np.ndarray): Time steps for the simulation.
-        - CpFunc (function): Function to calculate Cp (power coefficient) based on TSR.
-        - CqFunc (function): Function to calculate Cq (torque coefficient) based on TSR.
-        - CtFunc (function): Function to calculate Ct (thrust coefficient) based on TSR.
-        - CpOpt (float): Optimal Cp value.
-        - TSROpt (float): Optimal TSR value corresponding to CpOpt.
-        - TSRmax (float): Maximum TSR value where Cp or Ct becomes zero.
-        - Ng (float): Gear ratio.
-        - J_d (float): Drivetrain inertia.
-        - B_d (float): Drivetrain friction.
-        - J_r (float): Rotor inertia.
-        - Kt (float): Torque constant.
-        - Rw (float): Generator resistance.
-        - I_eff (float): Effective inertia of the system.
-        - GLOBAL (ConstantsGlobal): Global constants for physical properties.
-
-    Methods:
-        - simulate(): Simulates turbine dynamics and calculates performance metrics.
-        - get_results(): Retrieves simulation results for analysis.
-        - flowAtDepth(): Adjusts flow speed based on hub depth and mooring depth.
-        - calculate_hydro_torque(): Calculates hydro torque based on flow speed and Cq.
-        - calculate_thrust_force(): Calculates thrust force based on flow speed and Ct.
-        - calculate_power(): Calculates power metrics (mechanical, electrical, fluid).
     """
+    # Attributes:
+    #     Radius (float): Rotor radius in meters.
+    #     Prated (float): Rated power in watts.
+    #     Trated (float): Rated torque in Nm.
+    #     dHub (float): Hub depth in meters.
+    #     dMoor (float): Mooring depth in meters.
+    #     Uinf (np.ndarray): Flow speeds at the surface in m/s.
+    #     t (np.ndarray): Time steps for the simulation.
+    #     CpFunc (function): Function to calculate Cp (power coefficient) based on TSR.
+    #     CqFunc (function): Function to calculate Cq (torque coefficient) based on TSR.
+    #     CtFunc (function): Function to calculate Ct (thrust coefficient) based on TSR.
+    #     CpOpt (float): Optimal Cp value.
+    #     TSROpt (float): Optimal TSR value corresponding to CpOpt.
+    #     TSRmax (float): Maximum TSR value where Cp or Ct becomes zero.
+    #     Ng (float): Gear ratio.
+    #     J_d (float): Drivetrain inertia.
+    #     B_d (float): Drivetrain friction.
+    #     J_r (float): Rotor inertia.
+    #     Kt (float): Torque constant.
+    #     Rw (float): Generator resistance.
+    #     I_eff (float): Effective inertia of the system.
+    #     GLOBAL (ConstantsGlobal): Global constants for physical properties.
+
+    # Methods:
+    #     simulate(): Simulates turbine dynamics and calculates performance metrics.
+    #     get_results(): Retrieves simulation results for analysis.
+    #     flowAtDepth(): Adjusts flow speed based on hub depth and mooring depth.
+    #     calculate_hydro_torque(): Calculates hydro torque based on flow speed and Cq.
+    #     calculate_thrust_force(): Calculates thrust force based on flow speed and Ct.
+    #     calculate_power(): Calculates power metrics (mechanical, electrical, fluid).
+
     def __init__(self, config):
         """
         Initializes the RotorSimulation object with user-defined and tidal data parameters.
@@ -102,6 +103,16 @@ class RotorSimulation:
         self.dHub_array = np.zeros(np.shape(self.t)) 
 
     def turbine_dynamics_closeloop(self, t, w):  # Define the ODE system
+        """
+        Defines the ordinary differential equation (ODE) system for closed-loop turbine dynamics.
+
+        Args:
+            t (float): The current time at which to evaluate the dynamics.
+            w (float): The current angular velocity of the rotor in rad/s.
+
+        Returns:
+            float: The rate of change of angular velocity (dw/dt) at the given time.
+        """
         U = np.interp(t, self.t, self.Uinf_adjusted)
         wr = w / self.Ng
         lambda_ = wr * self.Radius / U
@@ -111,6 +122,16 @@ class RotorSimulation:
         return dw_dt
 
     def turbine_dynamics_openloop(self, t, w):  # Define the ODE system
+        """
+        Defines the ordinary differential equation (ODE) system for open-loop turbine dynamics.
+
+        Args:
+            t (float): The current time at which to evaluate the dynamics.
+            w (float): The current angular velocity of the rotor in rad/s.
+
+        Returns:
+            float: The rate of change of angular velocity (dw/dt) at the given time.
+        """
         U = np.interp(t, self.t, self.Uinf_adjusted)
         tau_g = np.interp(t, self.t, self.Tg)
         wr = w / self.Ng
@@ -124,10 +145,17 @@ class RotorSimulation:
         Simulates turbine dynamics and calculates performance metrics.
 
         Handles both closed-loop and open-loop dynamics based on rated torque limits.
+
+        This method solves the initial value problem (IVP) for turbine dynamics using the 
+        closed-loop dynamics function and initializes the angular velocity based on the 
+        optimal tip speed ratio.
+
+        Returns:
+            None
         """
         print("Solving the initial value problem (IVP) for turbine dynamics...")
 
-        # Initial angular velocity (rad/s)
+        # Initial angular velocity (rad/s) based on optimal TSR
         w0 = self.Ng * self.Uinf_adjusted[0] * self.TSROpt / self.Radius  
 
         # Solve the IVP for closed-loop dynamics
@@ -139,7 +167,7 @@ class RotorSimulation:
             method='Radau'
         )
 
-        # Store the results
+        # Process results from closed-loop dynamics
         self.w = solution.y[0]  # Angular velocity over time
         self.wr = self.w / self.Ng
         self.Tg = self.Kopt * (self.wr)**2 / self.Ng
@@ -148,11 +176,13 @@ class RotorSimulation:
 
         # Check if the electrical power exceeds the rated power
         if np.any(self.Tg > self.Trated):
-            print("At least one value in self.Tg is greater than self.Trated.")
             print("Rated torque exceeded. Switching to open-loop dynamics...")
             
             # Limit generator torque
+            plt.plot(self.Tg)
             self.Tg = np.minimum(self.Tg, self.Trated)
+
+            plt.plot(self.Tg)
 
             # Solve the IVP for open-loop dynamics
             solution = sp.integrate.solve_ivp(
@@ -163,9 +193,10 @@ class RotorSimulation:
                 method='Radau'
             )
 
-            # Store the results
+            # Process results from open-loop dynamics
             self.w = solution.y[0]  # Angular velocity over time
             self.wr = self.w / self.Ng
+            # self.Tg = self.Kopt * (self.wr)**2 / self.Ng
             self.Iq = self.Tg / self.Kt
             self.Vq = self.w * self.Kt - self.Rw * self.Iq
 
@@ -177,34 +208,106 @@ class RotorSimulation:
         # Calculate power metrics
         self.calculate_power()
 
-        # Print indication that the IVP solving is complete
-        print("IVP solving complete.")
+        # Indicate that the IVP solving is complete
+        print("IVP solving complete.") 
+
 
     def calculate_Kopt(self):
+        """
+        Calculates the optimal torque constant (Kopt) for optimal tip speed ratio (TSR) tracking. 
+
+        Returns:
+            float: The optimal torque constant in appropriate units.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * self.Radius**3 * self.CpOpt / self.TSROpt**3
 
     def calculate_hydro_torque(self, Radius, Uinf, Cq):
+        """
+        Calculates the hydro torque exerted on the turbine.
+
+        Args:
+            Radius (float): The radius of the rotor in meters.
+            Uinf (float): The flow speed at the surface in m/s.
+            Cq (float): The torque coefficient.
+
+        Returns:
+            float: The hydro torque in Nm.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * Radius**2) * Radius * Uinf**2 * Cq
 
     def calculate_thrust_force(self, Radius, Uinf, Ct):
+        """
+        Calculates the thrust force exerted on the turbine.
+
+        Args:
+            Radius (float): The radius of the rotor in meters.
+            Uinf (float): The flow speed at the surface in m/s.
+            Ct (float): The thrust coefficient.
+
+        Returns:
+            float: The thrust force in N.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * Radius**2) * Uinf**2 * Ct
 
     def calculate_phydro(self, Uinf, Cp):
+        """
+        Calculates the hydro power available from the flow.
+
+        Args:
+            Uinf (float): The flow speed at the surface in m/s.
+            Cp (float): The power coefficient.
+
+        Returns:
+            float: The hydro power in watts.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * Uinf**3 * Cp
 
     def calculate_pfluid(self):
+        """
+        Calculates the fluid power based on adjusted flow speed.
+
+        Returns:
+            np.ndarray: The fluid power in watts.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * self.Uinf_adjusted**3
 
     def calculate_punc(self):
+        """
+        Calculates the unconstrained power based on optimal torque constant.
+
+        Returns:
+            np.ndarray: The unconstrained power in watts.
+        """
         return self.Kopt * (self.Uinf_adjusted * self.TSROpt / self.Radius)**3
 
     def calculate_pmech(self):
+        """
+        Calculates the mechanical power output of the turbine.
+
+        Returns:
+            np.ndarray: The mechanical power in watts.
+        """
         return self.w * self.Tg
 
     def calculate_pelec(self):
+        """
+        Calculates the electrical power output of the turbine.
+
+        Returns:
+            np.ndarray: The electrical power in watts.
+        """
         return self.Vq * self.Iq
 
     def calculate_power(self):
+        """
+        Calculates various power metrics for the turbine.
+
+        This method computes hydro power, fluid power, unconstrained power, mechanical power, 
+        and electrical power, storing the results in instance variables.
+
+        Returns:
+            None
+        """
         self.Phydro = self.calculate_phydro(self.Uinf_adjusted, self.CpFunc(self.TSR))
         self.Pfluid = self.calculate_pfluid()
         self.Punc = self.calculate_punc()
@@ -216,7 +319,8 @@ class RotorSimulation:
         Retrieves simulation results for analysis.
 
         Returns:
-            dict: Simulation results including time steps, angular velocity, torque, power metrics, and TSR.
+            dict: Simulation results including time steps, angular velocity, torque, 
+                power metrics, and TSR.
         """
         return {
             't': self.t,

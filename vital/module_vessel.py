@@ -5,14 +5,14 @@ This module provides tools for managing vessel properties and calculating forces
 
 Key Features:
 -------------
-- Represent vessel geometry and physical properties.
-- Support user-defined vessel configurations or default properties.
-- Calculate drag forces exerted on the vessel based on flow speeds.
-- Provide utility methods for printing attributes and managing vessel properties.
+* Represent vessel geometry and physical properties.
+* Support user-defined vessel configurations or default properties.
+* Calculate drag forces exerted on the vessel based on flow speeds.
+* Provide utility methods for printing attributes and managing vessel properties.
 
 Classes:
 --------
-- VesselData: Represents vessel properties and provides methods for force calculations.
+* VesselData: Represents vessel properties and provides methods for force calculations.
 """
 
 import numpy as np
@@ -25,42 +25,42 @@ GLOBAL = ConstantsGlobal()
 class VesselData:
     """
     A class to represent the data and properties of a vessel.
-
-    Attributes:
-        height (float): Height of the vessel.
-        density (float): Density of the vessel material.
-        theta_m (float): Mooring line angle in radians.
-        alpha (float): Aspect ratio for the vessel.
-        Cd (float): Drag coefficient.
-        phi (float): Pitch constraint in radians.
-        user_defined (bool): Flag indicating if the vessel properties are user-defined.
-        vessel_properties (dict): Dictionary containing user-defined vessel properties.
-        width (float): Width of the vessel.
-        Fmoor (float): Mooring force.
-        length (float): Length of the vessel.
-        Khs (float): Hydrostatic stiffness.
-        Kphi (float): Pitch hydrostatic stiffness.
-        GM (float): Metacentric height.
-        VesselVolume (float): Volume of the vessel.
-        h_s (float): Submerged height; Half of the vessel height.
-        area (float): Cross-sectional area of the vessel.
-        Fdrag (float): Drag force exerted on the vessel.
-
-    Methods:
-        set_vessel_properties(): Sets vessel properties from user-defined geometry.
-        set_default_properties(): Sets default properties for the vessel.
-        calculate_vessel_drag_force(Uinf): Calculates the drag force exerted on the vessel.
-        print_all_attributes(): Prints all attributes of the VesselData object.
     """
+    # Attributes:
+    #     height (float): Height of the vessel in meters.
+    #     density (float): Density of the vessel material in kg/m^3.
+    #     theta_m (float): Mooring line angle in radians.
+    #     alpha (float): Aspect ratio for the vessel.
+    #     Cd (float): Drag coefficient.
+    #     phi (float): Pitch constraint in radians.
+    #     user_defined (bool): Flag indicating if the vessel properties are user-defined.
+    #     vessel_properties (dict): Dictionary containing user-defined vessel properties.
+    #     width (float): Width of the vessel in meters.
+    #     Fmoor (float): Mooring force in Newtons.
+    #     length (float): Length of the vessel in meters.
+    #     Khs (float): Hydrostatic stiffness in N/m.
+    #     Kphi (float): Pitch hydrostatic stiffness in N/m.
+    #     GM (float): Metacentric height in meters.
+    #     VesselVolume (float): Volume of the vessel in cubic meters.
+    #     h_s (float): Submerged height; half of the vessel height in meters.
+    #     area (float): Cross-sectional area of the vessel in square meters.
+    #     Fdrag (float): Drag force exerted on the vessel in Newtons.
+
+    # Methods:
+    #     set_vessel_properties(): Sets vessel properties from user-defined geometry.
+    #     set_default_properties(): Sets default properties for the vessel.
+    #     calculate_vessel_drag_force(Uinf): Calculates the drag force exerted on the vessel.
+    #     print_all_attributes(): Prints all attributes of the VesselData object.
+
 
     def __init__(self, height=None, density=None, theta_m=None, alpha=None, Cd=None, phi=None, user_defined=False, vessel_properties=None, simResult=None):
         """
         Constructs all the necessary attributes for the VesselData object.
 
         Args:
-            height (float, optional): Height of the vessel (default is None).
-            density (float, optional): Density of the vessel material (default is None).
-            theta_m (float, optional): Mooring line angle in radians (default is None).
+            height (float, optional): Height of the vessel in meters (default is None).
+            density (float, optional): Density of the vessel material in kg/m^3 (default is None).
+            theta_m (float, optional): Mooring line angle in radians (default is None). 
             alpha (float, optional): Aspect ratio for the vessel (default is None).
             Cd (float, optional): Drag coefficient (default is None).
             phi (float, optional): Pitch constraint in radians (default is None).
@@ -118,6 +118,17 @@ class VesselData:
     def set_default_properties(self):
         """
         Sets default properties for the vessel.
+
+        This method initializes the vessel's attributes with default values if they are not already set.
+        The default values are as follows:
+            * height: 0.5 meters
+            * density: 500.0 kg/m^3
+            * theta_m: 45 degrees (converted to radians)
+            * alpha: 4.0 (aspect ratio)
+            * Cd: 0.25 (drag coefficient)
+            * phi: 10 degrees (converted to radians)
+        
+        Additionally, it calculates the submerged height (h_s) and the cross-sectional area of the vessel.
         """
         if self.height is None:
             self.height = 0.5  # Default height
@@ -156,6 +167,8 @@ class VesselData:
     def print_all_attributes(self):
         """
         Prints all attributes of the VesselData object.
+
+        This method iterates through all attributes of the object and prints their names and values.
         """
         for attribute, value in vars(self).items():
             print(f"{attribute}: {value}")

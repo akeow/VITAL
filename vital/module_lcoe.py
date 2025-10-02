@@ -5,15 +5,15 @@ This module provides tools for calculating the Levelized Cost of Energy (LCOE) f
 
 Key Features:
 -------------
-- Manage and validate input data for LCOE calculations.
-- Perform LCOE calculations based on CAPEX, OPEX, and annual energy production.
-- Support multiple customer configurations and applications (e.g., battery charging, grid connection).
-- Provide detailed breakdowns of CAPEX, OPEX, and annual energy generation.
+* Manage and validate input data for LCOE calculations.
+* Perform LCOE calculations based on CAPEX, OPEX, and annual energy production.
+* Support multiple customer configurations and applications (e.g., battery charging, grid connection).
+* Provide detailed breakdowns of CAPEX, OPEX, and annual energy generation.
 
 Classes:
 --------
-- LCOEData: Manages and validates input data for LCOE calculations.
-- LCOECalculator: Performs LCOE calculations and provides detailed breakdowns of costs and energy production.
+* LCOEData: Manages and validates input data for LCOE calculations.
+* LCOECalculator: Performs LCOE calculations and provides detailed breakdowns of costs and energy production.
 """
 
 import numpy as np
@@ -31,30 +31,30 @@ CONVERT = ConstantsUnitConversion()
 class LCOEData:
     """
     A class for managing and validating input data for LCOE calculations.
-
-    Attributes:
-        turbine_radius (float): Radius of the turbine in meters.
-        turbine_rated_power (float): Rated power of the turbine in watts.
-        number_of_turbines (int): Number of turbines in the system.
-        hub_depth (float): Depth of the turbine hub in meters.
-        dCable (float): Length of the electrical cable in meters.
-        dMoor (float): Mooring depth in meters.
-        Fdrag (float): Drag force acting on the vessel in newtons.
-        VesselVolume (float): Volume of the vessel in cubic meters.
-        Ft (np.ndarray): Thrust forces acting on the turbine over time.
-        Battery (float): Battery capacity in kWh (optional).
-        lifetime (int): Turbine lifetime in years.
-        discount_rate (float): Discount rate for LCOE calculations.
-        turbulence_intensity (float): Turbulence intensity factor.
-        customer (str): Customer configuration identifier.
-        application (str): Application type (e.g., battery charging, grid connection).
-        power_data (np.ndarray): Electrical power data over time.
-        time_data (np.ndarray): Time steps corresponding to power data.
-
-    Methods:
-        update_turbine_config(turbineConfig): Updates turbine configuration attributes.
-        update_simulation_results(simResult): Updates simulation results attributes.
     """
+    # Attributes:
+    #     turbine_radius (float): Radius of the turbine in meters.
+    #     turbine_rated_power (float): Rated power of the turbine in watts.
+    #     number_of_turbines (int): Number of turbines in the system.
+    #     hub_depth (float): Depth of the turbine hub in meters.
+    #     dCable (float): Length of the electrical cable in meters.
+    #     dMoor (float): Mooring depth in meters.
+    #     Fdrag (float): Drag force acting on the vessel in newtons.
+    #     VesselVolume (float): Volume of the vessel in cubic meters.
+    #     Ft (np.ndarray): Thrust forces acting on the turbine over time.
+    #     Battery (float): Battery capacity in kWh (optional).
+    #     lifetime (int): Turbine lifetime in years.
+    #     discount_rate (float): Discount rate for LCOE calculations.
+    #     turbulence_intensity (float): Turbulence intensity factor.
+    #     customer (str): Customer configuration identifier.
+    #     application (str): Application type (e.g., battery charging, grid connection).
+    #     power_data (np.ndarray): Electrical power data over time.
+    #     time_data (np.ndarray): Time steps corresponding to power data.
+
+    # Methods:
+    #     update_turbine_config(turbineConfig): Updates turbine configuration attributes.
+    #     update_simulation_results(simResult): Updates simulation results attributes.
+
 
     def __init__(self, tidalData, turbineConfig, vesselData, simResult,
                  lifetime, discount_rate, turbulence_intensity, customer, application, BatteryCapacity_kWh=None):

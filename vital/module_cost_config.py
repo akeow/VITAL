@@ -4,24 +4,20 @@ module_cost_config.py
 This module provides configuration for cost calculation functions used in Levelized Cost of Energy (LCOE) calculations.
 
 Key Features:
--------------
-- Define cost calculation functions for different customers and applications.
-- Support rotor and drivetrain costs, grid connection costs, and battery charging costs.
-- Provide flexibility for customer-specific configurations.
+    * Define cost calculation functions for different customers and applications.
+    * Support rotor and drivetrain costs, grid connection costs, and battery charging costs.
+    * Provide flexibility for customer-specific configurations.
 
 Configuration:
---------------
-COST_FUNCTIONS: A dictionary containing cost calculation functions for different customers and applications.
+    COST_FUNCTIONS (dict): A dictionary containing cost calculation functions for different customers and applications.
 
 Customers:
-----------
-- customer_A: Represents HDPS customer configuration.
-- customer_B: Represents SITKANA customer configuration.
+    * customer_A: Represents HDPS customer configuration.
+    * customer_B: Represents SITKANA customer configuration.
 
 Applications:
--------------
-- grid_connection: Cost functions for grid connection applications.
-- battery_charging: Cost functions for battery charging applications.
+    * grid_connection: Cost functions for grid connection applications.
+    * battery_charging: Cost functions for battery charging applications.
 """
 
 from vital.module_cost_calculations import (
