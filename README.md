@@ -6,58 +6,37 @@ VITAL is a Python package designed for the assessment of vessel integrated turbi
 ## Prerequisites
 - Conda should be installed on your system.
 - If you don't have Conda installed, you can download it from the official Conda website: [https://www.anaconda.com/download](https://www.anaconda.com/download).
-- Ensure that `git` and `pip` are installed on your system.
 
 ### Resources
 - [Anaconda Tutorial](https://anaconda.cloud/video-gs-installing-anaconda-windows) - A helpful guide for first-time Python users.
 
 ## Installation Instructions
 
-### Using Conda
-1. Clone or download this repository:
+1. Clone the Repository:
    ``` 
    git clone https://github.com/sandialabs/VITAL.git
    ```
 
 2. Navigate to the project directory:
     ```
-    cd vital
+    cd VITAL
     ```
 
-3. Run the following command to create the Conda environment:
+3. Create the Conda Environment
     ```
     conda env create --file environment.yml
     ```
 
-This command will install all the required packages listed in the `environment.yml` file. Please note that the installation process might take some time, as Conda will download and install the necessary packages.
-
-4. Once the environment creation process is complete, activate the environment using the following command:
+4. Activate the Conda Environment
     ```
     conda activate VITAL_env
     ```
 
-This command will activate the newly created environment named `VITAL_env`. You should see the environment name in your terminal prompt.
-
-5. You have successfully set up the Python environment using Conda! Now you can run the tutorial within this environment.
-
-### Using pip
-If you prefer to install the package directly using pip, you can do so with the following commands:
-1. Clone the repository:
-   ``` 
-   git clone https://github.com/sandialabs/VITAL.git
-   ```
-
-2. Navigate to the project directory:
-    ```
-    cd vital
-    ```
-
-3. Install the package in editable mode:
+3. Install the Package in Editable Mode
     ```
     pip install -e .
     ```
 
-This command will install the package and its dependencies, allowing you to make changes to the code and have them reflected immediately.
 
 ## Additional Notes
 - If you need to deactivate the environment, you can use the following command:
