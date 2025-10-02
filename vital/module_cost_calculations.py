@@ -1,29 +1,59 @@
+"""
+module_cost_calculations.py
+
+This module provides cost calculation functions for various components of tidal energy systems, including rotor, drivetrain, electrical cables, mooring, and battery systems.
+
+Key Features:
+    - Calculate costs for rotor and drivetrain components.
+    - Estimate costs for electrical cables, mooring systems, and grid connections.
+    - Support SITKANA-specific cost calculations for batteries, platforms, anchors, and charge controllers.
+    - Provide operating cost calculations for SITKANA systems.
+
+Functions:
+    calculate_electrical_cable_cost(): Calculates the cost of electrical cables.
+    calculate_mooring_cost(): Calculates the cost of mooring systems.
+    calculate_grid_connection_cost(): Calculates the cost of grid connection systems.
+    calculate_blade_cost(): Calculates the cost of turbine blades.
+    calculate_generator_cost(): Calculates the cost of turbine generators.
+    calculate_misc_cost(): Calculates miscellaneous electrical component costs.
+    calculate_hub_cost(): Calculates the cost of farm hub platforms.
+    calculate_cable_installation_cost(): Calculates the cost of cable installation.
+
+    SITKANA-specific functions:
+        calculate_rotor_cost_SITKANA(): Calculates rotor costs for SITKANA systems.
+        calculate_rotor_construction_cost_SITKANA(): Calculates rotor construction costs for SITKANA systems.
+        calculate_steel_component_cost_SITKANA(): Calculates steel component costs for SITKANA systems.
+        calculate_generator_cost_SITKANA(): Calculates generator costs for SITKANA systems.
+        calculate_assembly_cost_SITKANA(): Calculates assembly costs for SITKANA systems.
+        calculate_concrete_cost_SITKANA(): Calculates concrete costs for SITKANA systems.
+        calculate_gearbox_cost_SITKANA(): Calculates gearbox costs for SITKANA systems.
+        calculate_charge_controller_cost_SITKANA(): Calculates charge controller costs for SITKANA systems.
+        calculate_platform_cost_SITKANA(): Calculates platform costs for SITKANA systems.
+        calculate_anchor_cost_SITKANA(): Calculates anchor costs for SITKANA systems.
+        calculate_battery_cost_SITKANA(): Calculates battery costs for SITKANA systems.
+        operating_cost_SITKANA(): Calculates operating costs for SITKANA systems.
+"""
+
 import numpy as np
 from vital.constUnitConvert import ConstantsUnitConversion
 from vital.unit_weight import UnitWeight  # Import the function from the new file
 
 CONVERT = ConstantsUnitConversion()
- 
-# mooring_cable_length_m, 
-# force_vessel_drag_N, 
-# turbine_radius_m, 
-# force_turbine_thrust_N
-# turbine_rated_power_W, 
-# number_of_turbines
-# electrical_cable_length_m
-# vessel_volume_m3
-# BatteryCapacity_kWh
 
 
-def calculate_electrical_cable_cost(turbine_radius_m, 
-                                    turbine_rated_power_W, 
-                                    number_of_turbines, 
-                                    electrical_cable_length_m, 
-                                    mooring_cable_length_m, 
-                                    force_vessel_drag_N, 
-                                    force_turbine_thrust_N, 
-                                    vessel_volume_m3=None, 
-                                    BatteryCapacity_kWh=None):
+def calculate_electrical_cable_cost(turbine_radius_m, turbine_rated_power_W, number_of_turbines, electrical_cable_length_m, **kwargs):
+    """
+    Calculates the cost of electrical cables.
+
+    Args:
+        turbine_radius_m (float): Radius of the turbine in meters.
+        turbine_rated_power_W (float): Rated power of the turbine in watts.
+        number_of_turbines (int): Number of turbines in the system.
+        electrical_cable_length_m (float): Length of the electrical cable in meters.
+
+    Returns:
+        float: Electrical cable cost in USD.
+    """
     # Lopez table 7
     electrical_cable_length_km = electrical_cable_length_m * CONVERT.m2km
     system_total_power_MW = number_of_turbines * turbine_rated_power_W * CONVERT.W2MW
@@ -31,15 +61,22 @@ def calculate_electrical_cable_cost(turbine_radius_m,
     electrical_cable_cost_USD = electrical_cable_cost_kE * CONVERT.kE2E * CONVERT.euro2dollar
     return electrical_cable_cost_USD
 
-def calculate_mooring_cost(turbine_radius_m, 
-                            turbine_rated_power_W, 
-                            number_of_turbines, 
-                            electrical_cable_length_m, 
-                            mooring_cable_length_m, 
-                            force_vessel_drag_N, 
-                            force_turbine_thrust_N, 
-                            vessel_volume_m3=None, 
-                            BatteryCapacity_kWh=None):
+
+def calculate_mooring_cost(turbine_radius_m, turbine_rated_power_W, number_of_turbines, mooring_cable_length_m, force_vessel_drag_N, force_turbine_thrust_N, **kwargs):
+    """
+    Calculates the cost of mooring systems.
+
+    Args:
+        turbine_radius_m (float): Radius of the turbine in meters.
+        turbine_rated_power_W (float): Rated power of the turbine in watts.
+        number_of_turbines (int): Number of turbines in the system.
+        mooring_cable_length_m (float): Length of the mooring cable in meters.
+        force_vessel_drag_N (float): Drag force acting on the vessel in newtons.
+        force_turbine_thrust_N (float): Thrust force acting on the turbine in newtons.
+
+    Returns:
+        float: Mooring cost in USD.
+    """
     # Lopez table 6
     mooring_force_mTon = np.max(np.abs(force_vessel_drag_N + number_of_turbines * force_turbine_thrust_N)) * CONVERT.N2mTon
     mooring_cost_kE = 2 * mooring_cable_length_m * (60.0   + 0.25 * mooring_force_mTon) * 10**-3 
@@ -199,6 +236,8 @@ def calculate_generator_cost_SITKANA(turbine_radius_m,
                             vessel_volume_m3=None, 
                             BatteryCapacity_kWh=None):
     generator_cost_USD_perUnit = -2.20e-06*turbine_rated_power_W**2 + 2.12e-01*turbine_rated_power_W + 1.42e+02
+    # generator_cost_USD_perUnit = 1.686 * turbine_rated_power_W + 129.884
+
     generator_cost_USD = generator_cost_USD_perUnit*number_of_turbines
     return generator_cost_USD 
 
@@ -264,20 +303,6 @@ def calculate_charge_controller_cost_SITKANA(turbine_radius_m,
 
 
 
-# System level cost
-# def calculate_platform_cost_SITKANA(turbine_radius_m, 
-#                             turbine_rated_power_W, 
-#                             number_of_turbines, 
-#                             electrical_cable_length_m, 
-#                             mooring_cable_length_m, 
-#                             force_vessel_drag_N, 
-#                             force_turbine_thrust_N, 
-#                             vessel_volume_m3=None, 
-#                             BatteryCapacity_kWh=None):
-#     if vessel_volume_m3 is None:
-#         raise ValueError("vessel_volume_m3 parameter is required for platform cost calculation.")
-#     PlasticDensity = 1000
-#     return vessel_volume_m3 * PlasticDensity * 10.0
 
 def calculate_platform_cost_SITKANA(turbine_radius_m, 
                             turbine_rated_power_W, 
@@ -318,24 +343,6 @@ def calculate_anchor_cost_SITKANA(turbine_radius_m,
     return anchor_cost_USD  
 
 
-
-# def calculate_electrical_cable_cost_SITKANA(turbine_radius_m, 
-#                             turbine_rated_power_W, 
-#                             number_of_turbines, 
-#                             electrical_cable_length_m, 
-#                             mooring_cable_length_m, 
-#                             force_vessel_drag_N, 
-#                             force_turbine_thrust_N, 
-#                             vessel_volume_m3=None, 
-#                             BatteryCapacity_kWh=None):
-#     CostLand_Mile = 150000
-#     CostWater_Mile = 50000
-#     mile2meter = 1609.34
-
-#     electrical_cable_cost_USD = CostWater_Mile*0.75*electrical_cable_length_m/mile2meter + CostLand_Mile*0.25*electrical_cable_length_m/mile2meter
-
-#     return electrical_cable_cost_USD 
-
 def calculate_battery_cost_SITKANA(turbine_radius_m, 
                             turbine_rated_power_W, 
                             number_of_turbines, 
@@ -360,3 +367,47 @@ def operating_cost_SITKANA(turbine_rated_power,number_of_turbines):
     b = 2.74814600e-04
     c = 6.59375848e+04
     return a * np.exp(-b * System_Rated_Power) + c
+
+
+
+# def calculate_electrical_cable_cost_SITKANA(turbine_radius_m, 
+#                             turbine_rated_power_W, 
+#                             number_of_turbines, 
+#                             electrical_cable_length_m, 
+#                             mooring_cable_length_m, 
+#                             force_vessel_drag_N, 
+#                             force_turbine_thrust_N, 
+#                             vessel_volume_m3=None, 
+#                             BatteryCapacity_kWh=None):
+#     CostLand_Mile = 150000
+#     CostWater_Mile = 50000
+#     mile2meter = 1609.34
+
+#     electrical_cable_cost_USD = CostWater_Mile*0.75*electrical_cable_length_m/mile2meter + CostLand_Mile*0.25*electrical_cable_length_m/mile2meter
+
+#     return electrical_cable_cost_USD 
+ 
+# mooring_cable_length_m, 
+# force_vessel_drag_N, 
+# turbine_radius_m, 
+# force_turbine_thrust_N
+# turbine_rated_power_W, 
+# number_of_turbines
+# electrical_cable_length_m
+# vessel_volume_m3
+# BatteryCapacity_kWh
+
+# System level cost
+# def calculate_platform_cost_SITKANA(turbine_radius_m, 
+#                             turbine_rated_power_W, 
+#                             number_of_turbines, 
+#                             electrical_cable_length_m, 
+#                             mooring_cable_length_m, 
+#                             force_vessel_drag_N, 
+#                             force_turbine_thrust_N, 
+#                             vessel_volume_m3=None, 
+#                             BatteryCapacity_kWh=None):
+#     if vessel_volume_m3 is None:
+#         raise ValueError("vessel_volume_m3 parameter is required for platform cost calculation.")
+#     PlasticDensity = 1000
+#     return vessel_volume_m3 * PlasticDensity * 10.0

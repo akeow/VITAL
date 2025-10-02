@@ -1,15 +1,68 @@
+"""
+module_rotor_simulation.py
+
+This module provides tools for simulating rotor dynamics and calculating turbine performance metrics, including mechanical power, electrical power, speed, torque, and thrust force.
+
+Key Features:
+    Simulate turbine dynamics under varying flow speeds and depths.
+    Calculate hydro torque, thrust force, and power metrics (mechanical, electrical, fluid).
+    Handle closed-loop and open-loop turbine dynamics.
+    Adjust flow speed based on hub depth and mooring depth.
+    Retrieve simulation results for analysis and visualization.
+"""
 import numpy as np
 from vital.constGlobal import ConstantsGlobal
 import scipy as sp
-
-from vital.unit_weight import UnitWeight  # Import the function from the new file
+# from vital.unit_weight import UnitWeight  # Import the function from the new file
+import matplotlib.pyplot as plt
 
 
 class RotorSimulation:
+    """
+    A class for simulating rotor dynamics and calculating turbine performance metrics.
+    """
+    # Attributes:
+    #     Radius (float): Rotor radius in meters.
+    #     Prated (float): Rated power in watts.
+    #     Trated (float): Rated torque in Nm.
+    #     dHub (float): Hub depth in meters.
+    #     dMoor (float): Mooring depth in meters.
+    #     Uinf (np.ndarray): Flow speeds at the surface in m/s.
+    #     t (np.ndarray): Time steps for the simulation.
+    #     CpFunc (function): Function to calculate Cp (power coefficient) based on TSR.
+    #     CqFunc (function): Function to calculate Cq (torque coefficient) based on TSR.
+    #     CtFunc (function): Function to calculate Ct (thrust coefficient) based on TSR.
+    #     CpOpt (float): Optimal Cp value.
+    #     TSROpt (float): Optimal TSR value corresponding to CpOpt.
+    #     TSRmax (float): Maximum TSR value where Cp or Ct becomes zero.
+    #     Ng (float): Gear ratio.
+    #     J_d (float): Drivetrain inertia.
+    #     B_d (float): Drivetrain friction.
+    #     J_r (float): Rotor inertia.
+    #     Kt (float): Torque constant.
+    #     Rw (float): Generator resistance.
+    #     I_eff (float): Effective inertia of the system.
+    #     GLOBAL (ConstantsGlobal): Global constants for physical properties.
+
+    # Methods:
+    #     simulate(): Simulates turbine dynamics and calculates performance metrics.
+    #     get_results(): Retrieves simulation results for analysis.
+    #     flowAtDepth(): Adjusts flow speed based on hub depth and mooring depth.
+    #     calculate_hydro_torque(): Calculates hydro torque based on flow speed and Cq.
+    #     calculate_thrust_force(): Calculates thrust force based on flow speed and Ct.
+    #     calculate_power(): Calculates power metrics (mechanical, electrical, fluid).
+
     def __init__(self, config):
+        """
+        Initializes the RotorSimulation object with user-defined and tidal data parameters.
+
+        Args:
+            config (dict): Configuration dictionary containing simulation parameters.
+        """
         self.Radius = config['Radius']
         self.Prated = config['Prated']
-        self.dCable = config['dCable']
+        self.Trated = config['Trated']
+        self.dHub = config['dHub']
         self.dMoor = config['dMoor']
         self.Uinf = config['Uinf']
         self.t = config['t']
@@ -19,145 +72,242 @@ class RotorSimulation:
         self.CpOpt = config['CpOpt']
         self.TSROpt = config['TSROpt']
         self.TSRmax = config['TSRmax']
-        self.Umin = config['Umin']
-        self.withBrake = config['withBrake']
-        self.control_strategy = config['control_strategy']
-        self.attachment_method = config['attachment_method']
-        self.turbine_efficiency = config['efficiency']
+
+        self.Ng = config['Ng']
+        self.J_d = config['J_d']
+        self.B_d = config['B_d']
+        self.J_r = config['J_r']
+        self.Kt = config['Kt']
+        self.Rw = config['Rw']
+        self.I_eff = self.J_r / self.Ng**2 + self.J_d  # Effective inertia
 
         self.GLOBAL = ConstantsGlobal()
-        self.Jr = 1000000
-        self.M_turbine = UnitWeight(self.Radius, self.Prated)  # Call the imported function
-        self.Wturbine = self.M_turbine * self.GLOBAL.g
         self.Kopt = self.calculate_Kopt()
 
         self.initialize_results()
-
-        if self.control_strategy == 'constant_speed':
-            self.optimal_speed = self.find_optimal_constant_speed()
-
-        if self.attachment_method == 'solid_bar':
-            self.theta_turbine = np.zeros(np.shape(self.t))
-            self.dHub = np.ones(np.shape(self.t)) * self.dCable
-            self.Uinf_adjusted = self.flowAtDepth(self.Uinf, self.Radius, self.dHub, self.dMoor)
+        self.dHub_array = np.ones(np.shape(self.t)) * self.dHub
+        self.Uinf_adjusted = self.flowAtDepth(self.Uinf, self.Radius, self.dHub_array, self.dMoor)
 
     def initialize_results(self):
+        """
+        Initializes arrays to store simulation results.
+        """
         self.w = np.zeros(np.shape(self.t))
+        self.wr = np.zeros(np.shape(self.t))
         self.wd = np.zeros(np.shape(self.t))
         self.TSR = np.zeros(np.shape(self.t))
-        self.Tc = np.zeros(np.shape(self.t))
-        self.Th = np.zeros(np.shape(self.t))
-        self.Tbrake = np.zeros(np.shape(self.t))
+        self.Tg = np.zeros(np.shape(self.t))
+        self.Th = np.zeros(np.shape(self.t)) 
         self.Ft = np.zeros(np.shape(self.t))
         self.Uinf_adjusted = np.zeros(np.shape(self.t))
-        self.dHub = np.zeros(np.shape(self.t))
-        self.theta_turbine = np.zeros(np.shape(self.t))
+        self.dHub_array = np.zeros(np.shape(self.t)) 
+
+    def turbine_dynamics_closeloop(self, t, w):  # Define the ODE system
+        """
+        Defines the ordinary differential equation (ODE) system for closed-loop turbine dynamics.
+
+        Args:
+            t (float): The current time at which to evaluate the dynamics.
+            w (float): The current angular velocity of the rotor in rad/s.
+
+        Returns:
+            float: The rate of change of angular velocity (dw/dt) at the given time.
+        """
+        U = np.interp(t, self.t, self.Uinf_adjusted)
+        wr = w / self.Ng
+        lambda_ = wr * self.Radius / U
+        tau_hydro = self.calculate_hydro_torque(self.Radius, U, self.CqFunc(lambda_))
+        tau_g = self.Kopt * (wr)**2 / self.Ng
+        dw_dt = (tau_hydro / self.Ng - tau_g - self.B_d * w) / self.I_eff
+        return dw_dt
+
+    def turbine_dynamics_openloop(self, t, w):  # Define the ODE system
+        """
+        Defines the ordinary differential equation (ODE) system for open-loop turbine dynamics.
+
+        Args:
+            t (float): The current time at which to evaluate the dynamics.
+            w (float): The current angular velocity of the rotor in rad/s.
+
+        Returns:
+            float: The rate of change of angular velocity (dw/dt) at the given time.
+        """
+        U = np.interp(t, self.t, self.Uinf_adjusted)
+        tau_g = np.interp(t, self.t, self.Tg)
+        wr = w / self.Ng
+        lambda_ = wr * self.Radius / U
+        tau_hydro = self.calculate_hydro_torque(self.Radius, U, self.CqFunc(lambda_))
+        dw_dt = (tau_hydro / self.Ng - tau_g - self.B_d * w) / self.I_eff
+        return dw_dt
 
     def simulate(self):
-        dt = np.mean(np.diff(self.t))
+        """
+        Simulates turbine dynamics and calculates performance metrics.
 
-        for kk in range(len(self.t)):
-            if self.attachment_method == 'cable':
-                self.adjust_hub_depth(kk)
+        Handles both closed-loop and open-loop dynamics based on rated torque limits.
 
-            if self.control_strategy == 'optimal':
-                self.simulate_optimal_control(kk, dt)
-            elif self.control_strategy == 'constant_speed':
-                self.simulate_constant_speed(kk, dt)
-                # print('This is constant speed')
+        This method solves the initial value problem (IVP) for turbine dynamics using the 
+        closed-loop dynamics function and initializes the angular velocity based on the 
+        optimal tip speed ratio.
 
+        Returns:
+            None
+        """
+        print("Solving the initial value problem (IVP) for turbine dynamics...")
+
+        # Initial angular velocity (rad/s) based on optimal TSR
+        w0 = self.Ng * self.Uinf_adjusted[0] * self.TSROpt / self.Radius  
+
+        # Solve the IVP for closed-loop dynamics
+        solution = sp.integrate.solve_ivp(
+            self.turbine_dynamics_closeloop, 
+            [self.t[0], self.t[-1]], 
+            [w0], 
+            t_eval=self.t, 
+            method='Radau'
+        )
+
+        # Process results from closed-loop dynamics
+        self.w = solution.y[0]  # Angular velocity over time
+        self.wr = self.w / self.Ng
+        self.Tg = self.Kopt * (self.wr)**2 / self.Ng
+        self.Iq = self.Tg / self.Kt
+        self.Vq = self.w * self.Kt - self.Rw * self.Iq
+
+        # Check if the electrical power exceeds the rated power
+        if np.any(self.Tg > self.Trated):
+            print("Rated torque exceeded. Switching to open-loop dynamics...")
+            
+            # Limit generator torque
+            plt.plot(self.Tg)
+            self.Tg = np.minimum(self.Tg, self.Trated)
+
+            plt.plot(self.Tg)
+
+            # Solve the IVP for open-loop dynamics
+            solution = sp.integrate.solve_ivp(
+                self.turbine_dynamics_openloop, 
+                [self.t[0], self.t[-1]], 
+                [w0], 
+                t_eval=self.t, 
+                method='Radau'
+            )
+
+            # Process results from open-loop dynamics
+            self.w = solution.y[0]  # Angular velocity over time
+            self.wr = self.w / self.Ng
+            # self.Tg = self.Kopt * (self.wr)**2 / self.Ng
+            self.Iq = self.Tg / self.Kt
+            self.Vq = self.w * self.Kt - self.Rw * self.Iq
+
+        # Calculate TSR and other parameters
+        self.TSR = self.wr * self.Radius / self.Uinf_adjusted
+        self.Ft = self.calculate_thrust_force(self.Radius, self.Uinf_adjusted, self.CtFunc(self.TSR))
+        self.Th = self.calculate_hydro_torque(self.Radius, self.Uinf_adjusted, self.CqFunc(self.TSR))
+
+        # Calculate power metrics
         self.calculate_power()
 
-    def adjust_hub_depth(self, kk):
-        if kk == 0:
-            self.dHub[kk] = self.dCable
-            self.theta_turbine[kk] = 0
-        else:
-            self.theta_turbine[kk] = np.arctan(self.Ft[kk-1] / self.Wturbine)
-            self.dHub[kk] = self.dCable * np.cos(self.theta_turbine[kk])
+        # Indicate that the IVP solving is complete
+        print("IVP solving complete.") 
 
-        self.Uinf_adjusted[kk] = self.flowAtDepth(self.Uinf[kk], self.Radius, self.dHub[kk], self.dMoor)
-
-    def simulate_optimal_control(self, kk, dt):
-        if kk == 0:
-            self.w[kk] = self.TSROpt * self.Uinf_adjusted[kk] / self.Radius
-        else:
-            self.w[kk] = self.w[kk-1] + self.wd[kk-1] * dt
-
-        if self.Uinf_adjusted[kk] != 0:
-            self.TSR[kk] = min(self.w[kk] * self.Radius / self.Uinf_adjusted[kk], self.TSRmax)
-        else:
-            self.TSR[kk] = 0
-
-        self.Th[kk] = self.calculate_hydro_torque(self.Radius, self.Uinf_adjusted[kk], self.CqFunc(self.TSR[kk]))
-        self.Tc[kk] = self.Kopt * self.w[kk]**2
-
-        if self.Tc[kk] * self.w[kk] * self.turbine_efficiency > self.Prated:
-            self.Tc[kk] = (self.Prated / self.turbine_efficiency) / self.w[kk]
-
-        if self.Uinf_adjusted[kk] < self.Umin:
-            self.Tc[kk] = 0
-
-        if self.withBrake:
-            self.Tbrake[kk] = (self.w[kk]**2 * self.Kopt) - self.Tc[kk]
-
-        self.Ft[kk] = self.calculate_thrust_force(self.Radius, self.Uinf_adjusted[kk], self.CtFunc(self.TSR[kk]))
-
-        self.wd[kk] = 1 / self.Jr * (self.Th[kk] - self.Tc[kk] - self.Tbrake[kk])
-
-    def simulate_constant_speed(self, kk, dt):
-        if kk == 0:
-            self.w[kk] = self.optimal_speed
-            print(f'Optimal Speed is {self.optimal_speed}')
-        else:
-            self.w[kk] = self.w[kk-1] + self.wd[kk-1] * dt
-
-        if self.Uinf_adjusted[kk] != 0:
-            self.TSR[kk] = min(self.w[kk] * self.Radius / self.Uinf_adjusted[kk], self.TSRmax)
-        else:
-            self.TSR[kk] = 0
-
-        self.Th[kk] = self.calculate_hydro_torque(self.Radius, self.Uinf_adjusted[kk], self.CqFunc(self.TSR[kk]))
-        self.Tc[kk] = self.Th[kk]  # Required to keep speed constant
-
-        if self.Tc[kk] * self.w[kk] * self.turbine_efficiency > self.Prated:
-            self.Tc[kk] = (self.Prated / self.turbine_efficiency) / self.w[kk]
-
-        if self.Uinf_adjusted[kk] < self.Umin:
-            self.Tc[kk] = 0
-
-        if self.withBrake:
-            self.Tbrake[kk] = self.Th[kk] - self.Tc[kk]
-
-        self.Ft[kk] = self.calculate_thrust_force(self.Radius, self.Uinf_adjusted[kk], self.CtFunc(self.TSR[kk]))
-
-        self.wd[kk] = 1 / self.Jr * (self.Th[kk] - self.Tc[kk] - self.Tbrake[kk])
 
     def calculate_Kopt(self):
+        """
+        Calculates the optimal torque constant (Kopt) for optimal tip speed ratio (TSR) tracking. 
+
+        Returns:
+            float: The optimal torque constant in appropriate units.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * self.Radius**3 * self.CpOpt / self.TSROpt**3
 
     def calculate_hydro_torque(self, Radius, Uinf, Cq):
+        """
+        Calculates the hydro torque exerted on the turbine.
+
+        Args:
+            Radius (float): The radius of the rotor in meters.
+            Uinf (float): The flow speed at the surface in m/s.
+            Cq (float): The torque coefficient.
+
+        Returns:
+            float: The hydro torque in Nm.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * Radius**2) * Radius * Uinf**2 * Cq
 
     def calculate_thrust_force(self, Radius, Uinf, Ct):
+        """
+        Calculates the thrust force exerted on the turbine.
+
+        Args:
+            Radius (float): The radius of the rotor in meters.
+            Uinf (float): The flow speed at the surface in m/s.
+            Ct (float): The thrust coefficient.
+
+        Returns:
+            float: The thrust force in N.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * Radius**2) * Uinf**2 * Ct
 
     def calculate_phydro(self, Uinf, Cp):
+        """
+        Calculates the hydro power available from the flow.
+
+        Args:
+            Uinf (float): The flow speed at the surface in m/s.
+            Cp (float): The power coefficient.
+
+        Returns:
+            float: The hydro power in watts.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * Uinf**3 * Cp
 
     def calculate_pfluid(self):
+        """
+        Calculates the fluid power based on adjusted flow speed.
+
+        Returns:
+            np.ndarray: The fluid power in watts.
+        """
         return 0.5 * self.GLOBAL.rho * (np.pi * self.Radius**2) * self.Uinf_adjusted**3
 
     def calculate_punc(self):
+        """
+        Calculates the unconstrained power based on optimal torque constant.
+
+        Returns:
+            np.ndarray: The unconstrained power in watts.
+        """
         return self.Kopt * (self.Uinf_adjusted * self.TSROpt / self.Radius)**3
 
     def calculate_pmech(self):
-        return self.w * self.Tc
+        """
+        Calculates the mechanical power output of the turbine.
+
+        Returns:
+            np.ndarray: The mechanical power in watts.
+        """
+        return self.w * self.Tg
 
     def calculate_pelec(self):
-        return self.w * self.Tc * self.turbine_efficiency
+        """
+        Calculates the electrical power output of the turbine.
+
+        Returns:
+            np.ndarray: The electrical power in watts.
+        """
+        return self.Vq * self.Iq
 
     def calculate_power(self):
+        """
+        Calculates various power metrics for the turbine.
+
+        This method computes hydro power, fluid power, unconstrained power, mechanical power, 
+        and electrical power, storing the results in instance variables.
+
+        Returns:
+            None
+        """
         self.Phydro = self.calculate_phydro(self.Uinf_adjusted, self.CpFunc(self.TSR))
         self.Pfluid = self.calculate_pfluid()
         self.Punc = self.calculate_punc()
@@ -165,10 +315,18 @@ class RotorSimulation:
         self.Pelec = self.calculate_pelec()
 
     def get_results(self):
+        """
+        Retrieves simulation results for analysis.
+
+        Returns:
+            dict: Simulation results including time steps, angular velocity, torque, 
+                power metrics, and TSR.
+        """
         return {
             't': self.t,
             'w': self.w,
-            'Tc': self.Tc,
+            'wr': self.wr,
+            'Tg': self.Tg,
             'Pmech': self.Pmech,
             'Pelec': self.Pelec,
             'Phydro': self.Phydro,
@@ -176,33 +334,30 @@ class RotorSimulation:
             'Punc': self.Punc,
             'TSR': self.TSR,
             'Ft': self.Ft,
-            'Th': self.Th,
-            'Tbrake': self.Tbrake,
-            'theta_turbine': self.theta_turbine,
-            'dHub': self.dHub,
-            'Wturbine': self.Wturbine,
+            'Th': self.Th,  
+            'dHub': self.dHub_array, 
             'Uinf_adjusted': self.Uinf_adjusted
         }
 
     def flowAtDepth(self, FlowSpeed, Radius, dHub, dMoor):
         """
-        Adjusts flow speed at a turbine's hub depth based on the mooring depth and the flow speed at the surface.
-        
-        Parameters:
-        - FlowSpeed: Flow speed at the surface in m/s.
-        - Radius: Radius of the turbine in meters.
-        - dHub: Depth of the turbine hub in meters.
-        - dMoor: Depth of the mooring in meters.
-        
+        Adjusts flow speed at a turbine's hub depth based on mooring depth and surface flow speed.
+
+        Args:
+            FlowSpeed (float or np.ndarray): Flow speed at the surface in m/s.
+            Radius (float): Rotor radius in meters.
+            dHub (float): Hub depth in meters.
+            dMoor (float): Mooring depth in meters.
+
         Returns:
-        - Uout: Adjusted flow speed at the hub depth in m/s.
+            float or np.ndarray: Adjusted flow speed at the hub depth in m/s.
         """
         if np.isscalar(FlowSpeed):
             FlowSpeed = np.array([FlowSpeed])
             dHub = np.array([dHub])
 
         Uout = np.zeros_like(FlowSpeed)
-        Area = np.pi * Radius ** 2.0
+        Area = np.pi * Radius**2.0
         Uavg = FlowSpeed / 1.07
         dz = dMoor - dHub
 
@@ -220,38 +375,9 @@ class RotorSimulation:
                 Zb = Zc = 0.5 * dMoor
                 Zd = dz[i] + Radius
 
-            tempvalA = (1.1407 * (1 / dMoor) ** (3 / 7) * Uavg[i] ** 3.0 * (Zb ** (10 / 7) - Za ** (10 / 7)))
-            tempvalB = (1.07 * Uavg[i]) ** 3.0 * (Zd - Zc)
+            tempvalA = (1.1407 * (1 / dMoor)**(3 / 7) * Uavg[i]**3.0 * (Zb**(10 / 7) - Za**(10 / 7)))
+            tempvalB = (1.07 * Uavg[i])**3.0 * (Zd - Zc)
             PfluidAvg = 1 / (4.0 * Radius) * self.GLOBAL.rho * Area * (tempvalA + tempvalB)
-            Uout[i] = ((2.0 * PfluidAvg) / (self.GLOBAL.rho * Area)) ** (1 / 3.0)
+            Uout[i] = ((2.0 * PfluidAvg) / (self.GLOBAL.rho * Area))**(1 / 3.0)
 
         return Uout if len(Uout) > 1 else Uout[0]
-
-    def objectiveFunction_findOptimalConstantSpeed(self, x, radius, Uinf, t, CpFunc):
-        speed = x
-        TSR = np.divide(speed * radius, Uinf, out=np.zeros_like(Uinf), where=Uinf!=0)  # Avoid division by zero
-        TSR = np.minimum(TSR, self.TSRmax)  # Cap TSR at TSRmax
-        power = self.calculate_phydro(Uinf, CpFunc(TSR))
-        avg_power = np.trapezoid(power, t) / (len(t) * np.mean(np.diff(t)))  # Calculate average power
-        return -1 * avg_power  # Negative because we are maximizing power
-
-    def find_optimal_constant_speed(self):
-        possibleSpeed = self.TSROpt * self.Uinf / self.Radius  # Assuming optimal TSR condition, what is the speed range
-        possibleSpeedRange = np.linspace(np.min(possibleSpeed), np.max(possibleSpeed), 50)  # Initial guess range
-
-        # If we kept the constant speed candidate in possibleSpeedRange, what is the potential average power
-        avePowerRange = -1 * np.array([self.objectiveFunction_findOptimalConstantSpeed(ii, self.Radius, self.Uinf, self.t, self.CpFunc) for ii in possibleSpeedRange])
-        
-        # What is the range of constant speed where we can get positive average power
-        # This is for defining the bounds of the optimization
-        positive_indices = np.where(avePowerRange > 0)[0]
-        min_Speed = possibleSpeedRange[positive_indices[0]]
-        max_Speed = possibleSpeedRange[positive_indices[-1]]
-
-        # Solve for the optimal value (exact)
-        result = sp.optimize.minimize_scalar(self.objectiveFunction_findOptimalConstantSpeed, bounds=(min_Speed, max_Speed), method='bounded', args=(self.Radius, self.Uinf, self.t, self.CpFunc))
-
-        optimal_speed = result.x
-        return optimal_speed
-
-    

@@ -4,15 +4,20 @@ channels:
   - defaults
   - anaconda
 dependencies:
-  - python=3.12
-  - matplotlib=3.10.6
-  - numpy=2.3.3
-  - pandas=2.3.2
-  - scipy=1.16.2
+  - python
+  - matplotlib
+  - numpy
+  - pandas
+  - scipy
   - seaborn
   - ipykernel
   - notebook
   - jupyterlab
-  - requests=2.32.5
+  - requests
   - sphinx
   - sphinx-autobuild
+  - sphinx_rtd_theme
+  - nbsphinx
+  - pip  # Add pip to install Python packages from pyproject.toml
+  - pip:
+      - vital  # This will install the `vital` package after you set it up

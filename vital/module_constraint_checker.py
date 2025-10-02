@@ -1,188 +1,174 @@
+"""
+module_constraint_checker.py
+
+This module provides tools for checking various constraints for turbine and vessel configurations, including power, depth, cavitation, and pitch stability.
+
+Key Features:
+    * Validate turbine and vessel performance against power constraints.
+    * Ensure rotor depth is sufficient for submersion.
+    * Check cavitation constraints based on pressure coefficients and flow speeds.
+    * Verify pitch stability constraints for vessel operation.
+"""
+
 import numpy as np
 from vital.constGlobal import ConstantsGlobal
 import matplotlib.pyplot as plt
+
 plt.style.use('tableau-colorblind10')
+
 
 class ConstraintChecker:
     """
-    Checks various constraints for turbine and vessel configurations.
+    A class for checking various constraints for turbine and vessel configurations.
     """
+    # Attributes:
+    #     Radius (float): Rotor radius in meters.
+    #     dHub (float): Hub depth in meters.
+    #     Prated (float): Rated power in watts.
+    #     number_of_turbines (int): Number of turbines in the system.
+    #     CpminFunc (function): Function to calculate Cpmin (minimum pressure coefficient) based on TSR.
+    #     GLOBAL (ConstantsGlobal): Global constants for physical properties.
+    #     TSR (np.ndarray): Tip-speed ratio over time from simulation results.
+    #     Uinf_adjusted (np.ndarray): Adjusted flow speeds over time from simulation results.
+    #     Pelec (np.ndarray): Electrical power over time from simulation results.
+    #     Ft (np.ndarray): Thrust forces over time from simulation results.
+    #     wr (np.ndarray): Rotor angular velocity over time from simulation results.
+    #     Kphi (float): Vessel pitch hydrostatic stiffness.
+    #     phi (float): Vessel pitch angle in radians.
+    #     theta_m (float): Mooring line angle in radians.
+    #     area (float): Cross-sectional area of the vessel.
+    #     Xm (float): Horizontal distance from the center of rotation.
+    #     Zm (float): Vertical distance from the center of rotation.
 
-    def __init__(self, Radius, CpminFunc, turbineConfig):
+    # Methods:
+    #     power_constraint(): Calculates power constraint values.
+    #     check_power_constraint(): Checks if the power constraint is satisfied.
+    #     depth_constraint(): Calculates depth constraint values.
+    #     check_depth_constraint(): Checks if the depth constraint is satisfied.
+    #     cavitation_constraint(): Calculates cavitation constraint values.
+    #     check_cavitation_constraint(): Checks if the cavitation constraint is satisfied.
+    #     pitch_constraint(): Calculates pitch constraint values.
+    #     check_pitch_constraint(): Checks if the pitch constraint is satisfied.
+
+
+    def __init__(self, rotorData, turbineConfig, vesselConfig, simResult):
         """
-        Initialize the ConstraintChecker.
+        Initializes the ConstraintChecker object.
 
         Args:
-            Radius (float): Rotor radius.
-            CpminFunc (callable): Function to calculate the pressure coefficient for cavitation (Cpmin).
-            turbineConfig (dict): Turbine configuration dictionary.
+            rotorData (object): Rotor data object containing methods like `get_cpmin`.
+            turbineConfig (dict): Turbine configuration dictionary containing properties like radius, hub depth, etc.
+            vesselConfig (object): Vessel configuration object containing vessel properties like pitch stiffness and geometry.
+            simResult (dict): Simulation results containing flow speeds, thrust forces, tip-speed ratio, etc.
         """
-        self.Radius = Radius
-        self.CpminFunc = CpminFunc
+        self.Radius = turbineConfig['Radius']
+        self.dHub = turbineConfig['dHub']
+        self.Prated = turbineConfig['Prated']
+        self.number_of_turbines = turbineConfig['number_of_turbines']
+        self.CpminFunc = rotorData.get_cpmin
+
+        # Global constants
         self.GLOBAL = ConstantsGlobal()
         self.rho = self.GLOBAL.rho
         self.g = self.GLOBAL.g
         self.Pvap = self.GLOBAL.Pvap
         self.Patm = self.GLOBAL.Patm
-        self.withChain = turbineConfig.get('attachment_method') == 'chain'
 
-    def depth_constraint(self, dHub):
+        # Simulation results
+        self.TSR = simResult['TSR']
+        self.Uinf_adjusted = simResult['Uinf_adjusted']
+        self.Pelec = simResult['Pelec']
+        self.Ft = simResult['Ft']
+        self.wr = simResult['wr']
+
+        # Vessel configuration
+        self.Kphi = vesselConfig.Kphi
+        self.phi = vesselConfig.phi
+        self.theta_m = vesselConfig.theta_m
+        self.area = vesselConfig.area
+        self.Xm = vesselConfig.Xm
+        self.Zm = vesselConfig.Zm
+
+    def power_constraint(self):
         """
-        Calculate depth constraint values.
-
-        Args:
-            dHub (np.ndarray): Hub depths.
+        Calculates power constraint values.
 
         Returns:
-            np.ndarray: Depth constraint values (must be > 0 to be valid, rotor must be submerged.).
+            np.ndarray: Power constraint values (must be <= 0 to be valid).
         """
-        return dHub - self.Radius
+        return self.Prated - self.Pelec
 
-    def check_depth_constraint(self, dHub):
+    def check_power_constraint(self):
         """
-        Check if depth constraint is satisfied.
+        Checks if the power constraint is satisfied.
 
-        Args:
-            dHub (np.ndarray): Hub depths.
+        Returns:
+            bool: True if satisfied (Pelec > 0 and Pelec <= Prated), False otherwise.
+        """
+        return np.all(self.Pelec > 0) and np.all(self.power_constraint() >= 0)
+
+    def depth_constraint(self):
+        """
+        Calculates depth constraint values.
+
+        Returns:
+            np.ndarray: Depth constraint values (must be > 0 to be valid, rotor must be submerged).
+        """
+        return self.dHub - self.Radius
+
+    def check_depth_constraint(self):
+        """
+        Checks if the depth constraint is satisfied.
 
         Returns:
             bool: True if satisfied, False otherwise.
         """
-        return np.all(self.depth_constraint(dHub) > 0)
+        return np.all(self.depth_constraint() > 0)
 
-    def cavitation_constraint(self, TSR, Uinf_adjusted, RotorSpeed, dHub):
+    def cavitation_constraint(self):
         """
-        Calculate cavitation constraint values.
-
-        Args:
-            TSR (np.ndarray): Tip-speed ratio values.
-            Uinf_adjusted (np.ndarray): Adjusted flow speeds.
-            RotorSpeed (np.ndarray): Rotor speeds.
-            dHub (np.ndarray): Hub depths.
+        Calculates cavitation constraint values.
 
         Returns:
             np.ndarray: Cavitation constraint values (must be > 0 to be valid).
         """
-        Vinf = np.sqrt(Uinf_adjusted**2 + (self.Radius * RotorSpeed)**2)
-        Pinf = self.Patm + self.rho * self.g * (dHub - self.Radius) # Tip of rotor
-        Cpmin = self.CpminFunc(TSR)  # Pressure coefficient for cavitation
+        Vinf = np.sqrt(self.Uinf_adjusted**2 + (self.Radius * self.wr)**2)
+        Pinf = self.Patm + self.rho * self.g * (self.dHub - self.Radius)  # Pressure at rotor tip
+        Cpmin = self.CpminFunc(self.TSR)  # Pressure coefficient for cavitation
         return 0.5 * self.rho * Vinf**2 * Cpmin - (self.Pvap - Pinf)
 
-    def check_cavitation_constraint(self, TSR, Uinf_adjusted, RotorSpeed, dHub):
+    def check_cavitation_constraint(self):
         """
-        Check if cavitation constraint is satisfied.
-
-        Args:
-            TSR (np.ndarray): Tip-speed ratio values.
-            Uinf_adjusted (np.ndarray): Adjusted flow speeds.
-            RotorSpeed (np.ndarray): Rotor speeds.
-            dHub (np.ndarray): Hub depths.
+        Checks if the cavitation constraint is satisfied.
 
         Returns:
             bool: True if satisfied, False otherwise.
         """
-        return np.all(self.cavitation_constraint(TSR, Uinf_adjusted, RotorSpeed, dHub) > 0)
+        return np.all(self.cavitation_constraint() > 0)
 
-    def check_pitch_stiffness_constraint(self, vessel):
+    def pitch_constraint(self):
         """
-        Check if pitch stiffness constraint is satisfied.
-
-        Args:
-            vessel (VesselData): Vessel data object.
-
-        Returns:
-            bool: True if satisfied, False otherwise.
-        """
-        return vessel.user_defined or vessel.GM > 0
-
-    def pitch_constraint(self, vessel, Uinf_adjusted, Ft, dHub, number_of_turbines):
-        """
-        Calculate pitch constraint values.
-
-        Args:
-            vessel (VesselData): Vessel data object.
-            Uinf_adjusted (np.ndarray): Flow speeds.
-            Ft (np.ndarray): Thrust forces.
-            dHub (np.ndarray): Hub depths.
-            number_of_turbines (int): Number of turbines.
+        Calculates pitch constraint values.
 
         Returns:
             np.ndarray: Pitch constraint values (must be > 0 to be valid).
         """
-        if vessel.user_defined:
-            return self.user_defined_pitch_constraint(vessel, Uinf_adjusted, Ft, dHub, number_of_turbines)
-        return self.designed_pitch_constraint(vessel, Uinf_adjusted, Ft, number_of_turbines)
-
-    def designed_pitch_constraint(self, vessel, Uinf_adjusted, Ft, number_of_turbines):
-        """
-        Calculate pitch constraint for a designed vessel.
-
-        Args:
-            vessel (VesselData): Vessel data object.
-            Uinf_adjusted (np.ndarray): Flow speeds.
-            Ft (np.ndarray): Thrust forces.
-            number_of_turbines (int): Number of turbines.
-
-        Returns:
-            np.ndarray: Pitch constraint values (must be > 0 to be valid).
-        """
-        theta_m = vessel.theta_m
-        Fmoor = (0.25 * vessel.Cd * vessel.height * self.rho * vessel.width * Uinf_adjusted**2 + number_of_turbines * Ft) / np.sin(theta_m)
-        Fdrag = 0.5 * self.rho * vessel.Cd * Uinf_adjusted**2 * vessel.width * vessel.h_s
-        Fbuoy = self.rho * self.g * vessel.VesselVolume
-
-        MomentEquation = (
-            Fmoor * np.cos(theta_m) * vessel.length / 2 +
-            number_of_turbines * Ft * vessel.height / 2 +
-            Fdrag * (vessel.height / 2 - vessel.h_s / 2) -
-            Fbuoy * (vessel.height / 2 - vessel.h_s / 2)
-        )
-
-        return vessel.Kphi * vessel.phi - MomentEquation
-
-    def user_defined_pitch_constraint(self, vessel, Uinf_adjusted, Ft, dHub, number_of_turbines):
-        """
-        Calculate pitch constraint for a user-defined vessel.
-
-        Args:
-            vessel (VesselData): Vessel data object.
-            Uinf_adjusted (np.ndarray): Flow speeds.
-            Ft (np.ndarray): Thrust forces.
-            dHub (np.ndarray): Hub depths.
-            number_of_turbines (int): Number of turbines.
-
-        Returns:
-            np.ndarray: Pitch constraint values (must be > 0 to be valid).
-        """
-        F_vessel_thrust = 0.5 * self.rho * vessel.Cd * vessel.area * Uinf_adjusted**2
-        F_turbine_thrust = number_of_turbines * Ft
+        F_vessel_thrust = 0.5 * self.rho * self.area * self.Uinf_adjusted**2
+        F_turbine_thrust = self.number_of_turbines * self.Ft
         F_total = F_vessel_thrust + F_turbine_thrust
 
-        if self.withChain:
-            F_total = F_vessel_thrust  # Only vessel drag for Chain-connected turbines
-
-        ConstraintOut = (
-            vessel.Kphi * vessel.phi -
-            F_turbine_thrust * dHub -
-            F_total * vessel.Xm * np.cos(vessel.theta_m) -
-            F_total * vessel.Zm * np.sin(vessel.theta_m)
+        return (
+            self.Kphi * self.phi -
+            F_turbine_thrust * self.dHub -
+            F_total * self.Xm * np.cos(self.theta_m) -
+            F_total * self.Zm * np.sin(self.theta_m)
         )
 
-        # plt.plot(ConstraintOut)
-        return ConstraintOut
-
-    def check_pitch_constraint(self, vessel, Uinf_adjusted, Ft, dHub, number_of_turbines):
+    def check_pitch_constraint(self):
         """
-        Check if pitch constraint is satisfied.
-
-        Args:
-            vessel (VesselData): Vessel data object.
-            Uinf_adjusted (np.ndarray): Flow speeds.
-            Ft (np.ndarray): Thrust forces.
-            dHub (np.ndarray): Hub depths.
-            number_of_turbines (int): Number of turbines.
+        Checks if the pitch constraint is satisfied.
 
         Returns:
             bool: True if satisfied, False otherwise.
         """
-        return np.all(self.pitch_constraint(vessel, Uinf_adjusted, Ft, dHub, number_of_turbines) > 0)
+        return np.all(self.pitch_constraint() > 0)

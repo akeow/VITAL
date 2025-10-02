@@ -18,3 +18,9 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+# Custom target for building HTML and cleaning up temporary directories
+html:
+	@$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
+	@python -c "import shutil, os; shutil.rmtree(os.path.abspath('source/examples'), ignore_errors=True); shutil.rmtree(os.path.abspath('source/data'), ignore_errors=True)"
+	@echo "HTML build complete and cleanup done!"

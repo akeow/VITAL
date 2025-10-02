@@ -1,3 +1,25 @@
+"""
+module_cost_config.py
+
+This module provides configuration for cost calculation functions used in Levelized Cost of Energy (LCOE) calculations.
+
+Key Features:
+    * Define cost calculation functions for different customers and applications.
+    * Support rotor and drivetrain costs, grid connection costs, and battery charging costs.
+    * Provide flexibility for customer-specific configurations.
+
+Configuration:
+    COST_FUNCTIONS (dict): A dictionary containing cost calculation functions for different customers and applications.
+
+Customers:
+    * customer_A: Represents HDPS customer configuration.
+    * customer_B: Represents SITKANA customer configuration.
+
+Applications:
+    * grid_connection: Cost functions for grid connection applications.
+    * battery_charging: Cost functions for battery charging applications.
+"""
+
 from vital.module_cost_calculations import (
     calculate_blade_cost,
     calculate_generator_cost,
@@ -17,7 +39,6 @@ from vital.module_cost_calculations import (
     calculate_charge_controller_cost_SITKANA,
     calculate_platform_cost_SITKANA,
     calculate_anchor_cost_SITKANA,
-    # calculate_electrical_cable_cost_SITKANA,
     calculate_battery_cost_SITKANA
 )
 
@@ -45,8 +66,6 @@ COST_FUNCTIONS = {
     'customer_B': {
         'rotor_and_drivetrain': {
             'anchor_cost': calculate_anchor_cost_SITKANA,
-            # 'platform_cost': calculate_platform_cost_SITKANA,
-            'charge_controller_cost': calculate_charge_controller_cost_SITKANA,
             'gearbox_cost': calculate_gearbox_cost_SITKANA,
             'concrete_cost': calculate_concrete_cost_SITKANA,
             'assembly_cost': calculate_assembly_cost_SITKANA,
@@ -63,7 +82,8 @@ COST_FUNCTIONS = {
                 'cable_installation_cost': calculate_cable_installation_cost
             },
             'battery_charging': {
-                'battery_cost': calculate_battery_cost_SITKANA
+                'battery_cost': calculate_battery_cost_SITKANA,
+                'charge_controller_cost': calculate_charge_controller_cost_SITKANA,
             }
         }
     }

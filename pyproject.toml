@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vital"
+version = "1.0.0"
+description = "Vessel Integrated Turbine Assessment for LCOE"
+readme = "README.md"
+authors = [
+    {name = "Sandia National Laboratories"},
+]
+urls = {Documentation = "https://sandialabs.github.io/VITAL/"}
+requires-python = ">=3.8"
+license = "Apache-2.0"  # Use SPDX license expression directly
+license-files = [
+    "LICENSE*",  # Include license files automatically
+    "NOTICE",
+]  # Optional: Add other license-related files if needed
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "pandas",
+    "scipy",
+    "seaborn",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx_rtd_theme",
+    "jupyter",
+    "nbsphinx",
+]
+
+visualization = [
+    "matplotlib",
+    "seaborn",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vital*"]  # Include the 'vital' package and sub-packages

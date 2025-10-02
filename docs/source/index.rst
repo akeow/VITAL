@@ -1,14 +1,14 @@
 VITAL
 =====
 
-The **Vessel Integrated Turbine Assessment for LCOE (VITAL)** is an open-source software developed to assess the Levelized Cost of Energy (LCOE) for tidal turbines integrated with vessels (e.g., fishing vessels) or floating platforms for battery charging and grid connection application (future work).
+The **Vessel Integrated Turbine Assessment for LCOE (VITAL)** is an open-source software developed to assess the Levelized Cost of Energy (LCOE) for tidal turbines integrated with vessels (e.g., fishing vessels) or floating platforms for battery charging and grid connection applications (future work).
 
 Getting Started
 ===============
 To get started, see the installation instructions in the `GitHub repository`_. This is the initial release of VITAL, and many additional features are currently under development. Stay tuned for updates and new functionality.
 
-Developers
-==========
+Development Team
+================
 VITAL is developed by `Sandia National Laboratories`_, with funding support from the U.S. Department of Energy (DOE) Office of Technology Transitions (OTT) and the DOE Water Power Technologies Office (WPTO).
 
 This project is funded through the DOE Technology Commercialization Fund (TCF) Base Annual Appropriations Core Laboratory Infrastructure for Market Readiness (CLIMR). 
@@ -18,20 +18,29 @@ Sandia National Laboratories is a multi-mission laboratory managed and operated 
 .. _GitHub repository: https://github.com/sandialabs/VITAL
 .. _Sandia National Laboratories: https://www.sandia.gov
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Documentation
 
+   overview
+   constraint
 
 .. toctree::
    :maxdepth: 2
    :hidden:
+   :caption: Tutorials
 
-   constraint
+   examples/Tutorial1_Tidal.ipynb
+   examples/Tutorial2_Rotor.ipynb
+   examples/Tutorial3_SimulateRotor.ipynb
+   examples/Tutorial4_CheckConstraint.ipynb
+   examples/Tutorial5_CalculateCost.ipynb
+   examples/Tutorial6_BruteOptimization.ipynb
 
-API Documentation
-=================
-
-.. autosummary::
-   :toctree: api_docs
-   :recursive:
-   :nosignatures:
-
-   vital
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: API Documentation
+   
+   api_docs/vital

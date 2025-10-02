@@ -1,45 +1,49 @@
+"""
+module_rotor.py
+
+Tools for working with rotor performance data, including the `RotorData` class and utility functions.
+
+Functions:
+    get_cp(tsr): Interpolates Cp (power coefficient) for a given TSR.
+    get_ct(tsr): Interpolates Ct (thrust coefficient) for a given TSR.
+    get_cq(tsr): Interpolates Cq (torque coefficient) for a given TSR.
+    get_cpmin(tsr): Interpolates Cpmin (minimum pressure coefficient) for a given TSR.
+
+Classes:
+    RotorData: A class for managing and processing rotor performance data.
+
+Raises:
+    ValueError: If the rotor performance data file or Cpmin data file is invalid or cannot be loaded.
+"""
 import numpy as np
 import pandas as pd
 import json
 
 class RotorData:
     """
-    A class to represent rotor data and perform various calculations related to rotor performance.
-
-    Attributes
-    ----------
-    filename : str
-        The filename of the rotor data file.
-    cpmin_filename : str, optional
-        The filename of the Cpmin data file.
-    data : DataFrame
-        The rotor data.
-    tsr : ndarray
-        The tip-speed ratio values.
-    cp : ndarray
-        The Cp values.
-    ct : ndarray
-        The Ct values.
-    cpmin : ndarray
-        The Cpmin values.
-    CpOpt : float
-        The maximum Cp value.
-    TSROpt : float
-        The corresponding TSR value for the maximum Cp.
-    TSRmax : float
-        The maximum TSR value where either Cp or Ct first becomes zero.
+    A class for managing and processing rotor performance data.
     """
 
-    def __init__(self, filename, cpmin_filename=None):
+    def __init__(self, filename: str, cpmin_filename: str = None):
         """
-        Constructs all the necessary attributes for the RotorData object.
+        Initializes the RotorData object.
 
-        Parameters
-        ----------
-        filename : str
-            The filename of the rotor data file.
-        cpmin_filename : str, optional
-            The filename of the Cpmin data file.
+        Args:
+            filename (str): The path to the rotor performance data file.
+            cpmin_filename (str, optional): The path to the Cpmin data file.
+
+        Attributes:
+            filename (str): The path to the rotor performance data file.
+            cpmin_filename (str): The path to the Cpmin data file (optional).
+            data (pd.DataFrame): The DataFrame containing rotor performance data.
+            tsr (np.ndarray): The tip-speed ratio values from the rotor data.
+            cp (np.ndarray): The power coefficient (Cp) values from the rotor data.
+            ct (np.ndarray): The thrust coefficient (Ct) values from the rotor data.
+            cq (np.ndarray): The torque coefficient (Cq) values derived from Cp and TSR.
+            cpmin (np.ndarray): The minimum pressure coefficient (Cpmin) values.
+            CpOpt (float): The optimal Cp value.
+            TSROpt (float): The optimal TSR value corresponding to CpOpt.
+            TSRmax (float): The maximum TSR value where Cp or Ct becomes zero.
         """
         self.filename = filename
         self.cpmin_filename = cpmin_filename
@@ -47,225 +51,111 @@ class RotorData:
         self.tsr = self.data['TSR'].values
         self.cp = self.data['Cp'].values
         self.ct = self.data['Ct'].values
+        self.cq = self.cp / self.tsr
         self.cpmin = self.load_cpmin_data()
         self.prepare_data()
         self.CpOpt, self.TSROpt = self.find_max_cp()
         self.TSRmax = self.find_tsr_max()
 
-    def load_data(self):
+    def load_data(self) -> pd.DataFrame:
         """
-        Load rotor data from a text file.
+        Loads rotor performance data from a text file.
 
-        Returns
-        -------
-        DataFrame
-            The rotor data.
+        Returns:
+            pd.DataFrame: The DataFrame containing rotor performance data.
         """
-        data = pd.read_csv(self.filename, delimiter='\t')
-        return data
+        return pd.read_csv(self.filename, delimiter='\t')
 
-    def load_cpmin_data(self):
+    def load_cpmin_data(self) -> np.ndarray:
         """
-        Load Cpmin data from a JSON file if provided, otherwise assume Cpmin is all -1.
+        Loads Cpmin data from a JSON file if provided, otherwise sets default values.
 
-        Returns
-        -------
-        ndarray
-            The Cpmin values corresponding to the TSR values.
+        Returns:
+            np.ndarray: The Cpmin values corresponding to TSR values.
         """
         if self.cpmin_filename:
             with open(self.cpmin_filename, 'r') as f:
                 cpmin_data = json.load(f)
-            span_ratio = cpmin_data['spanRatio']
-            cpmin = np.array(cpmin_data['Cpmin']['0'])  # Assuming spanRatio[0] corresponds to the tip of the blade
+            return np.array(cpmin_data['Cpmin']['0'])  # Assuming spanRatio[0] corresponds to the tip of the blade
         else:
-            cpmin = -1 * np.ones_like(self.tsr)
-        return cpmin
+            return -1 * np.ones_like(self.tsr)
 
     def prepare_data(self):
         """
-        Ensure Cp values are positive and saturate negative values to zero.
-        Ensure Cpmin values are negative or zero.
+        Ensures Cp/Ct values are positive and Cpmin values are negative or zero.
         """
-        self.cp = np.maximum(self.cp, 0)
+        self.cq = np.maximum(self.cq, 0)
         self.ct = np.maximum(self.ct, 0)
         self.cpmin = np.minimum(self.cpmin, 0)
 
-    def find_max_cp(self):
+    def find_max_cp(self) -> tuple:
         """
-        Find the maximum Cp point and the corresponding TSR value.
+        Finds the maximum Cp value and its corresponding TSR.
 
-        Returns
-        -------
-        float
-            The maximum Cp value.
-        float
-            The corresponding TSR value.
+        Returns:
+            tuple: A tuple containing:
+                CpOpt (float): The optimal Cp value.
+                TSROpt (float): The optimal TSR value corresponding to CpOpt.
         """
         max_cp_index = np.argmax(self.cp)
-        CpOpt = self.cp[max_cp_index]
-        TSROpt = self.tsr[max_cp_index]
-        return CpOpt, TSROpt
+        return self.cp[max_cp_index], self.tsr[max_cp_index]
 
-    def calculate_cq(self, tsr):
+    def get_cp(self, tsr: float) -> float:
         """
-        Calculate Cq = Cp / TSR for a given TSR.
+        Interpolates Cp (power coefficient) for a given TSR.
 
-        Parameters
-        ----------
-        tsr : float or ndarray
-            The tip-speed ratio.
+        Args:
+            tsr (float): The tip-speed ratio.
 
-        Returns
-        -------
-        float or ndarray
-            The calculated Cq value.
+        Returns:
+            float: The interpolated Cp value.
         """
-        if np.isscalar(tsr):
-            if tsr == 0:
-                return 0
-            cp = self.get_cp(tsr)
-            cq = cp / tsr
-            return max(cq, 0)
-        else:
-            cq = np.zeros_like(tsr)
-            non_zero_tsr = tsr != 0
-            cq[non_zero_tsr] = self.get_cp(tsr[non_zero_tsr]) / tsr[non_zero_tsr]
-            return np.maximum(cq, 0)
+        return np.interp(tsr, self.tsr, self.cp)
 
-    def get_cp(self, tsr):
+    def get_ct(self, tsr: float) -> float:
         """
-        Interpolate Cp value for a given TSR.
+        Interpolates Ct (thrust coefficient) for a given TSR.
 
-        Parameters
-        ----------
-        tsr : float or ndarray
-            The tip-speed ratio.
+        Args:
+            tsr (float): The tip-speed ratio.
 
-        Returns
-        -------
-        float or ndarray
-            The interpolated Cp value.
+        Returns:
+            float: The interpolated Ct value.
         """
-        if np.isscalar(tsr):
-            if tsr <= self.tsr[-1] and tsr >= self.tsr[0]:
-                return np.interp(tsr, self.tsr, self.cp)
-            elif tsr < self.tsr[0]:
-                # Linear extrapolation based on the first 4 data points
-                slope, intercept = np.polyfit(self.tsr[:4], self.cp[:4], 1)
-                return np.maximum(slope * tsr + intercept, 0)
-            else:
-                # Linear extrapolation based on the last 4 data points
-                slope, intercept = np.polyfit(self.tsr[-4:], self.cp[-4:], 1)
-                return np.maximum(slope * tsr + intercept, 0)
-        else:
-            cp = np.zeros_like(tsr)
-            cp[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[0])] = np.interp(tsr[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[0])], self.tsr, self.cp)
-            slope, intercept = np.polyfit(self.tsr[:4], self.cp[:4], 1)
-            cp[tsr < self.tsr[0]] = np.maximum(slope * tsr[tsr < self.tsr[0]] + intercept, 0)
-            slope, intercept = np.polyfit(self.tsr[-4:], self.cp[-4:], 1)
-            cp[tsr > self.tsr[-1]] = np.maximum(slope * tsr[tsr > self.tsr[-1]] + intercept, 0)
-            return cp
+        return np.interp(tsr, self.tsr, self.ct)
 
-    def get_ct(self, tsr):
+    def get_cq(self, tsr: float) -> float:
         """
-        Interpolate Ct value for a given TSR.
+        Interpolates Cq (torque coefficient) for a given TSR.
 
-        Parameters
-        ----------
-        tsr : float or ndarray
-            The tip-speed ratio.
+        Args:
+            tsr (float): The tip-speed ratio.
 
-        Returns
-        -------
-        float or ndarray
-            The interpolated Ct value.
+        Returns:
+            float: The interpolated Cq value.
         """
-        if np.isscalar(tsr):
-            if tsr <= self.tsr[-1] and tsr >= self.tsr[0]:
-                return np.interp(tsr, self.tsr, self.ct)
-            elif tsr < self.tsr[0]:
-                # Linear extrapolation based on the first 4 data points
-                slope, intercept = np.polyfit(self.tsr[:4], self.ct[:4], 1)
-                return np.maximum(slope * tsr + intercept, 0)
-            else:
-                # Linear extrapolation based on the last 4 data points
-                slope, intercept = np.polyfit(self.tsr[-4:], self.ct[-4:], 1)
-                return np.maximum(slope * tsr + intercept, 0)
-        else:
-            ct = np.zeros_like(tsr)
-            ct[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[0])] = np.interp(tsr[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[0])], self.tsr, self.ct)
-            slope, intercept = np.polyfit(self.tsr[:4], self.ct[:4], 1)
-            ct[tsr < self.tsr[0]] = np.maximum(slope * tsr[tsr < self.tsr[0]] + intercept, 0)
-            slope, intercept = np.polyfit(self.tsr[-4:], self.ct[-4:], 1)
-            ct[tsr > self.tsr[-1]] = np.maximum(slope * tsr[tsr > self.tsr[-1]] + intercept, 0)
-            return ct
+        return np.interp(tsr, self.tsr, self.cq)
 
-    def get_cq(self, tsr):
+    def get_cpmin(self, tsr: float) -> float:
         """
-        Interpolate Cq value for a given TSR.
+        Interpolates Cpmin (minimum pressure coefficient) for a given TSR.
 
-        Parameters
-        ----------
-        tsr : float or ndarray
-            The tip-speed ratio.
+        Args:
+            tsr (float): The tip-speed ratio.
 
-        Returns
-        -------
-        float or ndarray
-            The interpolated Cq value.
+        Returns:
+            float: The interpolated Cpmin value.
         """
-        return self.calculate_cq(tsr)
+        return np.interp(tsr, self.tsr, self.cpmin)
 
-    def get_cpmin(self, tsr):
+    def find_tsr_max(self) -> float:
         """
-        Interpolate Cpmin value for a given TSR.
+        Finds the maximum TSR where Cp or Ct becomes zero.
 
-        Parameters
-        ----------
-        tsr : float or ndarray
-            The tip-speed ratio.
-
-        Returns
-        -------
-        float or ndarray
-            The interpolated Cpmin value.
+        Returns:
+            float: The maximum TSR value where Cp or Ct becomes zero.
         """
-        if np.isscalar(tsr):
-            if tsr <= self.tsr[-1] and tsr >= self.tsr[0]:
-                return np.interp(tsr, self.tsr, self.cpmin)
-            elif tsr < self.tsr[1]:
-                # Linear extrapolation based on the first 4 data points
-                slope, intercept = np.polyfit(self.tsr[:4], self.cpmin[:4], 1)
-                return np.minimum(slope * tsr + intercept, 0)
-            else:
-                # Linear extrapolation based on the last 4 data points
-                slope, intercept = np.polyfit(self.tsr[-4:], self.cpmin[-4:], 1)
-                return np.minimum(slope * tsr + intercept, 0)
-        else:
-            cpmin = np.zeros_like(tsr)
-            cpmin[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[1])] = np.interp(tsr[(tsr <= self.tsr[-1]) & (tsr >= self.tsr[1])], self.tsr, self.cpmin)
-            slope, intercept = np.polyfit(self.tsr[1:5], self.cpmin[1:5], 1)
-            cpmin[tsr < self.tsr[1]] = np.minimum(slope * tsr[tsr < self.tsr[1]] + intercept, 0)
-            slope, intercept = np.polyfit(self.tsr[-4:], self.cpmin[-4:], 1)
-            cpmin[tsr > self.tsr[-1]] = np.minimum(slope * tsr[tsr > self.tsr[-1]] + intercept, 0)
-            return cpmin
-
-    def find_tsr_max(self):
-        """
-        Find the maximum TSR value where either Cp or Ct first becomes zero.
-
-        Returns
-        -------
-        float
-            The maximum TSR value where either Cp or Ct first becomes zero.
-        """
-        tsr_range = np.linspace(self.tsr[0], self.tsr[-1] + 10, 1000)  # Extend the range beyond the provided TSR values
-        cp_interp = self.get_cp(tsr_range)
-        ct_interp = self.get_ct(tsr_range)
-
-        tsr_cp_zero = tsr_range[np.where(cp_interp <= 0)[0][0]] if np.any(cp_interp <= 0) else tsr_range[-1]
-        tsr_ct_zero = tsr_range[np.where(ct_interp <= 0)[0][0]] if np.any(ct_interp <= 0) else tsr_range[-1]
-
-        TSRmax = max(tsr_cp_zero, tsr_ct_zero)
-        return TSRmax
+        tsr_values = np.linspace(self.tsr[0], self.tsr[-1] + 10, 1000)
+        cp_values = self.get_cp(tsr_values)
+        zero_indices = np.where(cp_values <= 0)[0]
+        return tsr_values[zero_indices[0]] if len(zero_indices) > 0 else tsr_values[-1]

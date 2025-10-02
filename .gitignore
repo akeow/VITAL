@@ -1,10 +1,67 @@
-**/__pycache__/
-**/.ipynb_checkpoints/
+# Byte-compiled / optimized / compiled Python files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
 
+# Virtual environment directories
+venv/
+env/
+.VITAL_env/
+
+# Python egg metadata
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Pipenv and Poetry files
+Pipfile.lock
+poetry.lock
+
+# Python testing outputs
+.coverage
+.tox/
+.cache/
+nosetests.xml
+pytest_cache/
+junit.xml
+htmlcov/
+
+# Sphinx documentation
 docs/_build/
+docs/source/.doctrees/
 
-sitkana/
+# Jupyter Notebook checkpoints
+**/.ipynb_checkpoints
 
+# Test files
+test/
+OldCode/
+
+# Build artifacts
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Sensitive files
+.env
+config.json
+
+# Miscellaneous files
 *.pdf
 *.zip
 *.pkl
