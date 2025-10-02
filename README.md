@@ -30,6 +30,7 @@ VITAL is a Python package designed for the assessment of vessel integrated turbi
     ```
 
 This command will install all the required packages listed in the `environment.yml` file. Please note that the installation process might take some time, as Conda will download and install the necessary packages.
+
 4. Once the environment creation process is complete, activate the environment using the following command:
     ```
     conda activate VITAL_env
