@@ -12,36 +12,7 @@ VITAL is a Python package designed for the assessment of vessel integrated turbi
 
 ## Installation Instructions
 
-### Using Conda
 1. Clone or download this repository:
-   ``` 
-   git clone https://github.com/sandialabs/VITAL.git
-   ```
-
-2. Navigate to the project directory:
-    ```
-    cd vital
-    ```
-
-3. Run the following command to create the Conda environment:
-    ```
-    conda env create --file environment.yml
-    ```
-
-This command will install all the required packages listed in the `environment.yml` file. Please note that the installation process might take some time, as Conda will download and install the necessary packages.
-
-4. Once the environment creation process is complete, activate the environment using the following command:
-    ```
-    conda activate VITAL_env
-    ```
-
-This command will activate the newly created environment named `VITAL_env`. You should see the environment name in your terminal prompt.
-
-5. You have successfully set up the Python environment using Conda! Now you can run the tutorial within this environment.
-
-### Using pip
-If you prefer to install the package directly using pip, you can do so with the following commands:
-1. Clone the repository:
    ``` 
    git clone https://github.com/sandialabs/VITAL.git
    ```
@@ -57,6 +28,16 @@ If you prefer to install the package directly using pip, you can do so with the 
     ```
 
 This command will install the package and its dependencies, allowing you to make changes to the code and have them reflected immediately.
+
+4. Once the environment creation process is complete, activate the environment using the following command:
+    ```
+    conda activate VITAL_env
+    ```
+
+This command will activate the newly created environment named `VITAL_env`. You should see the environment name in your terminal prompt.
+
+5. You have successfully set up the Python environment using Conda! Now you can run the tutorial within this environment.
+
 
 ## Additional Notes
 - If you need to deactivate the environment, you can use the following command:
