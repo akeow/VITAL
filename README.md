@@ -12,31 +12,30 @@ VITAL is a Python package designed for the assessment of vessel integrated turbi
 
 ## Installation Instructions
 
-1. Clone or download this repository:
+1. Clone the Repository:
    ``` 
    git clone https://github.com/sandialabs/VITAL.git
    ```
 
 2. Navigate to the project directory:
     ```
-    cd vital
+    cd VITAL
     ```
 
-3. Install the package in editable mode:
+3. Create the Conda Environment
     ```
-    pip install -e .
+    conda env create --file environment.yml
     ```
 
-This command will install the package and its dependencies, allowing you to make changes to the code and have them reflected immediately.
-
-4. Once the environment creation process is complete, activate the environment using the following command:
+4. Activate the Conda Environment
     ```
     conda activate VITAL_env
     ```
 
-This command will activate the newly created environment named `VITAL_env`. You should see the environment name in your terminal prompt.
-
-5. You have successfully set up the Python environment using Conda! Now you can run the tutorial within this environment.
+3. Install the Package in Editable Mode
+    ```
+    pip install -e .
+    ```
 
 
 ## Additional Notes
