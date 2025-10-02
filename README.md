@@ -6,7 +6,6 @@ VITAL is a Python package designed for the assessment of vessel integrated turbi
 ## Prerequisites
 - Conda should be installed on your system.
 - If you don't have Conda installed, you can download it from the official Conda website: [https://www.anaconda.com/download](https://www.anaconda.com/download).
-- Ensure that `git` and `pip` are installed on your system.
 
 ### Resources
 - [Anaconda Tutorial](https://anaconda.cloud/video-gs-installing-anaconda-windows) - A helpful guide for first-time Python users.
