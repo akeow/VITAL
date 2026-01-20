@@ -28,6 +28,7 @@ pytest_cache/
 junit.xml
 htmlcov/
 
+
 # Sphinx documentation
 docs/_build/
 docs/source/.doctrees/
@@ -65,3 +66,6 @@ config.json
 *.pdf
 *.zip
 *.pkl
+
+
+Cost models/
