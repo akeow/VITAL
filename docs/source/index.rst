@@ -44,3 +44,10 @@ Sandia National Laboratories is a multi-mission laboratory managed and operated 
    :caption: API Documentation
    
    api_docs/vital
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Additional Resources
+
+   permitting_info
