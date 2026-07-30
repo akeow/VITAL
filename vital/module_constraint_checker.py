@@ -103,9 +103,9 @@ class ConstraintChecker:
         Checks if the power constraint is satisfied.
 
         Returns:
-            bool: True if satisfied (Pelec > 0 and Pelec <= Prated), False otherwise.
+            bool: True if satisfied (Pelec >= 0 and Pelec <= Prated), False otherwise.
         """
-        return np.all(self.Pelec > 0) and np.all(self.power_constraint() >= 0)
+        return np.all(self.Pelec >= -1e-9) and np.all(self.power_constraint() >= -1e-9)
 
     def depth_constraint(self):
         """

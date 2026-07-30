@@ -117,18 +117,21 @@ class VesselData:
 
     def set_default_properties(self):
         """
-        Sets default properties for the vessel.
+        Sets default vessel properties.
 
-        This method initializes the vessel's attributes with default values if they are not already set.
-        The default values are as follows:
-            * height: 0.5 meters
-            * density: 500.0 kg/m^3
-            * theta_m: 45 degrees (converted to radians)
-            * alpha: 4.0 (aspect ratio)
-            * Cd: 0.25 (drag coefficient)
-            * phi: 10 degrees (converted to radians)
-        
-        Additionally, it calculates the submerged height (h_s) and the cross-sectional area of the vessel.
+        Default values are used when user-defined vessel properties are not
+        supplied.
+
+        Defaults:
+            height: 0.5 m
+            density: 500.0 kg/m^3
+            theta_m: 45 degrees
+            alpha: 4.0
+            Cd: 0.25
+            phi: 10 degrees
+
+        The method also calculates the submerged height and default
+        cross-sectional area.
         """
         if self.height is None:
             self.height = 0.5  # Default height

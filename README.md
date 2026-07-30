@@ -1,88 +1,150 @@
 # VITAL: Vessel Integrated Turbine Assessment for LCOE
 
-## Description
-VITAL is a Python package designed for the assessment of vessel integrated turbines, aimed at optimizing the Levelized Cost of Energy (LCOE).
+VITAL is an open-source Python package for screening-level assessment of tidal energy systems integrated with vessels, floating platforms, or other deployable marine-energy infrastructure.
+
+The software combines tidal resource data, rotor performance information, vessel or platform assumptions, dynamic rotor simulation, physical constraint checks, cost models, annual energy production, and Levelized Cost of Energy (LCOE) calculations.
+
+VITAL supports representative workflows for:
+
+- battery-charging applications,
+- grid-connected applications,
+- design-variable grid-search optimization,
+- and early-stage comparison of candidate sites and system assumptions.
+
+Results are intended for early-stage screening and comparison. They should not be interpreted as final engineering, permitting, or deployment recommendations.
+
+## Documentation
+
+The documentation is available at:
+
+<https://sandialabs.github.io/VITAL/>
+
+The documentation includes:
+
+- a quickstart tutorial,
+- module-specific tutorials,
+- case studies,
+- assumptions and FAQ,
+- and API documentation.
 
 ## Prerequisites
-- Conda should be installed on your system.
-- If you don't have Conda installed, you can download it from the official Conda website: [https://www.anaconda.com/download](https://www.anaconda.com/download).
 
-### Resources
-- [Anaconda Tutorial](https://anaconda.cloud/video-gs-installing-anaconda-windows) - A helpful guide for first-time Python users.
+Install Conda or Miniconda before creating the VITAL environment.
 
-## Installation Instructions
+- Anaconda: <https://www.anaconda.com/download>
+- Miniconda: <https://docs.conda.io/en/latest/miniconda.html>
 
-1. Clone the Repository:
-   ``` 
-   git clone https://github.com/sandialabs/VITAL.git
-   ```
+For users new to Conda, the Anaconda and Miniconda documentation provide installation and getting-started resources.
 
-2. Navigate to the project directory:
-    ```
-    cd VITAL
-    ```
+## Installation
 
-3. Create the Conda Environment
-    ```
-    conda env create --file environment.yml
-    ```
+### 1. Clone the repository
 
-4. Activate the Conda Environment
-    ```
-    conda activate VITAL_env
-    ```
+<!-- NOTE: Code block starts below. Keep the opening and closing triple backticks. -->
 
-3. Install the Package in Editable Mode
-    ```
-    pip install -e .
-    ```
-
-
-## Additional Notes
-- If you need to deactivate the environment, you can use the following command:
-```
-conda deactivate
+```bash
+git clone https://github.com/sandialabs/VITAL.git
+cd VITAL
 ```
 
-- Remember to activate the environment again using `conda activate VITAL_env` whenever you want to work within this environment.
+<!-- NOTE: Code block ended above. -->
 
-- If you want to remove the environment, you can use the following command:
+### 2. Create the Conda environment
+
+```bash
+conda env create --file environment.yml
 ```
-conda env remove --name VITAL_env
-```
 
-This command will remove the `VITAL_env` environment and all its associated packages.
+### 3. Activate the environment
 
-# Launching Jupyter Notebook from the Command Line
-## Instructions
-1. Open a terminal or command prompt.
-
-2. Activate the `VITAL_env` Conda environment using the following command:
-```
+```bash
 conda activate VITAL_env
 ```
 
-This command will activate the `VITAL_env` environment, ensuring that you are using the correct Python environment for running Jupyter Notebook.
+### 4. Install VITAL in editable mode
 
-3. Navigate to the directory where you want to create or open your Jupyter Notebook.
-
-4. Run the following command to launch Jupyter Notebook:
+```bash
+pip install -e .
 ```
+
+For development and documentation dependencies, use:
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Running the tutorials
+
+After installing VITAL, launch Jupyter Notebook or JupyterLab:
+
+```bash
 jupyter notebook
 ```
 
-This command will start the Jupyter Notebook server and open a new tab or window in your default web browser.
+or:
 
-5. In the Jupyter Notebook interface, you can create a new notebook or open an existing notebook by clicking on the respective options.
+```bash
+jupyter lab
+```
 
-6. You can now start working with Jupyter Notebook and run the tutorials available in this GitHub repository.
+Then open the notebooks in the `example/` directory.
 
-7. To stop the Jupyter Notebook server, go back to the terminal or command prompt where it was launched and press `Ctrl + C`. Confirm by typing `y` and pressing `Enter`.
+Recommended learning path:
+
+1. `01_quickstart.ipynb`
+2. `02_tidaldata.ipynb`
+3. `03_rotordata.ipynb`
+4. `04_rotor_simulation.ipynb`
+5. `05_constraint_checking.ipynb`
+6. `06_lcoe_calculation.ipynb`
+7. `07_optimization.ipynb`
+8. `08_loss_models.ipynb`
+
+Case studies are also provided in the `example/` directory.
+
+## Building the documentation locally
+
+From the repository root:
+
+```bash
+conda activate VITAL_env
+cd docs
+make clean
+make html
+```
+
+The built documentation will be available at:
+
+```text
+docs/build/index.html
+```
+
+On macOS, open it with:
+
+```bash
+open build/index.html
+```
+
+## Managing the Conda environment
+
+Deactivate the environment:
+
+```bash
+conda deactivate
+```
+
+Remove the environment:
+
+```bash
+conda env remove --name VITAL_env
+```
 
 ## License
 
 Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+
 Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
 
-This project is licensed under the Apache License, Version 2.0. See the `LICENSE.md` file for details.
+This project is licensed under the Apache License, Version 2.0. See `LICENSE.md` for details.
 
+Third-party license notices are provided in the `LICENSE/` directory.

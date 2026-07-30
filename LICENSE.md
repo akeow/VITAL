@@ -1,16 +1,13 @@
-Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
+# License
 
-Copyright (c) 2001-2024 Python Software Foundation; All Rights Reserved  
+Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
- 
-    http://www.apache.org/licenses/LICENSE-2.0
- 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
 
+VITAL is licensed under the Apache License, Version 2.0. You may obtain a copy of the license at:
+
+https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License, Version 2.0 for the specific language governing permissions and limitations under the License.
+
+Third-party license notices are provided in the `LICENSE/` directory.
