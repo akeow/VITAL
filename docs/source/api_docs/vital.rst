@@ -2,5 +2,4 @@
 =====
 
 .. automodule:: vital
-
-   
+   :no-members:

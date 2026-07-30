@@ -21,47 +21,56 @@ add_to_sys_path(project_root)
 
 
 # -- Project Information ------------------------------------------------------
-project = 'VITAL'
+project = "VITAL"
 copyright = (
-    '2025, National Technology & Engineering Solutions of Sandia, LLC (NTESS). '
-    'Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.'
+    "2025, National Technology & Engineering Solutions of Sandia, LLC (NTESS). "
+    "Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software."
 )
-author = 'Sandia National Laboratories'
-release = '0.1'
+author = "Sandia National Laboratories"
+release = "1.0.0"
 
 
 # -- General Configuration ----------------------------------------------------
 extensions = [
-    'sphinx.ext.autodoc',       # Automatically document Python modules
-    'sphinx.ext.napoleon',      # Support for Google-style and NumPy-style docstrings
-    'sphinx.ext.viewcode',      # Add links to highlighted source code
-    'sphinx.ext.mathjax',       # Render mathematical expressions using MathJax
-    'sphinx.ext.autosummary',   # Automatically generate summary tables
-    'nbsphinx',                 # Enables Jupyter Notebook rendering
+    "sphinx.ext.autodoc",       # Automatically document Python modules
+    "sphinx.ext.napoleon",      # Support for Google-style and NumPy-style docstrings
+    "sphinx.ext.viewcode",      # Add links to highlighted source code
+    "sphinx.ext.mathjax",       # Render mathematical expressions using MathJax
+    "sphinx.ext.autosummary",   # Automatically generate summary tables
+    "sphinx.ext.intersphinx",   # Link to external project documentation
+    "nbsphinx",                 # Enables Jupyter Notebook rendering
 ]
 
 autosummary_generate = True
 autosummary_generate_overwrite = True
-autosummary_ignore_modules = ['vital.constGlobal', 'vital.constUnitConvert']
+autosummary_ignore_modules = ["vital.constGlobal", "vital.constUnitConvert"]
 
+templates_path = ["_templates"]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**.ipynb_checkpoints",
+    "examples/Old",
+    "examples/Old/**",
+]
+
 
 # -- HTML Output Configuration ------------------------------------------------
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 html_static_path = []
 html_show_sourcelink = False
 
 
 # -- Autodoc Configuration ----------------------------------------------------
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'private-members': False,
-    'special-members': '__init__',
-    'show-inheritance': True,
+    "members": True,
+    "undoc-members": True,
+    "private-members": False,
+    "special-members": "__init__",
+    "show-inheritance": True,
 }
 autodoc_class_signature = "separated"
 
@@ -76,7 +85,7 @@ add_module_names = False
 
 
 # -- Syntax Highlighting ------------------------------------------------------
-highlight_language = 'python3'
+highlight_language = "python3"
 rst_prolog = """
 .. role:: python(code)
    :language: python
@@ -85,28 +94,37 @@ rst_prolog = """
 
 # -- MathJax Configuration ----------------------------------------------------
 mathjax3_config = {
-    'TeX': {
-        'equationNumbers': {'autoNumber': 'AMS'},
+    "TeX": {
+        "equationNumbers": {"autoNumber": "AMS"},
     }
 }
 
 
 # -- Intersphinx Configuration ------------------------------------------------
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
-    'numpy': ('https://numpy.org/doc/stable', None),
-    'pandas': ('https://pandas.pydata.org/docs', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "pandas": ("https://pandas.pydata.org/docs", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
 }
 
 
 # -- Suppress Warnings --------------------------------------------------------
-suppress_warnings = ['toc.not_included']
+suppress_warnings = [
+    "toc.not_included",
+]
 
 
 # -- nbsphinx Configuration ---------------------------------------------------
-nbsphinx_execute = 'always'
+# Use "never" for reliable documentation builds because several tutorials use
+# NOAA web services. If notebook outputs are desired in the HTML docs, save the
+# outputs in the notebooks before building.
+#
+# Other possible values:
+#   "auto"   - execute notebooks only if no outputs are present
+#   "always" - always execute notebooks during docs build
+nbsphinx_execute = "never"
 nbsphinx_allow_errors = True
 
 
@@ -123,20 +141,53 @@ def copy_directory(source, target, ignore_func=None):
         print(f"Error during file operation: {e}")
 
 
-# Define filtering function to exclude non-Jupyter Notebook files
-def exclude_non_ipynb_files(dir, contents):
-    """Exclude non-Jupyter Notebook files."""
-    return [c for c in contents if not c.endswith(".ipynb")]
+def exclude_non_ipynb_files(directory, contents):
+    """Exclude non-Jupyter Notebook files and old/development examples."""
+    excluded = []
+
+    for name in contents:
+        if name == "Old":
+            excluded.append(name)
+        elif not name.endswith(".ipynb"):
+            excluded.append(name)
+
+    return excluded
 
 
-# Copy example notebooks
+def exclude_data_files(directory, contents):
+    """Exclude old/development data and local system files from docs copy."""
+    excluded = []
+
+    for name in contents:
+        if name in {"OldFile", ".DS_Store", "__pycache__"}:
+            excluded.append(name)
+        elif name.endswith(".pyc"):
+            excluded.append(name)
+
+    return excluded
+
+
+# Copy example notebooks into the Sphinx source tree.
+# The copied directory is removed after HTML build by docs/Makefile.
 source_example = os.path.join(project_root, "example")
 target_example = os.path.join(project_root, "docs/source/examples")
-copy_directory(source_example, target_example, ignore_func=exclude_non_ipynb_files)
+copy_directory(
+    source_example,
+    target_example,
+    ignore_func=exclude_non_ipynb_files,
+)
 
-# Copy data files
+
+# Copy data files into the Sphinx source tree.
+# This supports notebook rendering with relative paths such as "../data/...".
+# The copied directory is removed after HTML build by docs/Makefile.
 source_data = os.path.join(project_root, "data")
 target_data = os.path.join(project_root, "docs/source/data")
-copy_directory(source_data, target_data)
+copy_directory(
+    source_data,
+    target_data,
+    ignore_func=exclude_data_files,
+)
+
 
 print("Configuration setup complete!")

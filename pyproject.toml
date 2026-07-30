@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,19 +7,23 @@ name = "vital"
 version = "1.0.0"
 description = "Vessel Integrated Turbine Assessment for LCOE"
 readme = "README.md"
-authors = [
-    {name = "Sandia National Laboratories"},
-]
-urls = {Documentation = "https://sandialabs.github.io/VITAL/"}
 requires-python = ">=3.8"
-license = "Apache-2.0"  # Use SPDX license expression directly
+license = "Apache-2.0"
 license-files = [
-    "LICENSE*",  # Include license files automatically
-    "NOTICE",
-]  # Optional: Add other license-related files if needed
+    "LICENSE.md",
+    "COPYRIGHT.md",
+    "LICENSE/*.txt",
+]
+authors = [
+    { name = "Sandia National Laboratories" },
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
 ]
 dependencies = [
     "numpy",
@@ -30,14 +34,26 @@ dependencies = [
     "requests",
 ]
 
+[project.urls]
+Documentation = "https://sandialabs.github.io/VITAL/"
+Repository = "https://github.com/sandialabs/VITAL"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
     "sphinx",
     "sphinx-autobuild",
-    "sphinx_rtd_theme",
+    "sphinx-rtd-theme",
     "jupyter",
     "nbsphinx",
+]
+
+docs = [
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "jupyter",
 ]
 
 visualization = [
@@ -47,4 +63,4 @@ visualization = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vital*"]  # Include the 'vital' package and sub-packages
+include = ["vital*"]

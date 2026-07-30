@@ -183,6 +183,11 @@ class LCOECalculator:
         self.instantaneous_power = None
         self.time_series = None
 
+        self.component_capex_total = None
+        self.adjusted_capex_total = None
+        self.adjustment_factor = 1.0
+
+
     def set_instantaneous_power(self):
         """
         Calculates instantaneous power and stores time series.
@@ -234,11 +239,13 @@ class LCOECalculator:
         Calculates total CAPEX based on customer configuration and application type.
 
         Returns:
-            float: Total CAPEX in USD.
+            float: Adjusted CAPEX in USD.
 
         Raises:
             ValueError: If battery capacity is invalid for non-grid_connection applications.
         """
+        self.capex = {}
+
         if self.data.application == 'grid_connection':
             self.data.Battery = 0
         elif self.data.Battery is None or self.data.Battery <= 0:
@@ -262,12 +269,15 @@ class LCOECalculator:
         for cost_name, cost_function in COST_FUNCTIONS[self.data.customer]['applications'][self.data.application].items():
             self.capex[cost_name] = cost_function(**common_params)
 
-        total_capex_usd = sum(self.capex.values())
-        
+        self.component_capex_total = sum(self.capex.values())
+
+        self.adjustment_factor = 1.0
         if self.data.customer == 'customer_A':  # HDPS
-            total_capex_usd *= (1 + 0.05)
-        
-        return total_capex_usd
+            self.adjustment_factor = 1.05
+
+        self.adjusted_capex_total = self.component_capex_total * self.adjustment_factor
+
+        return self.adjusted_capex_total
 
     def calculate_total_opex(self, total_capex):
         """
@@ -279,12 +289,13 @@ class LCOECalculator:
         Returns:
             float: Total OPEX in USD.
         """
-        if self.data.customer == 'customer_B':  # SITKANA
-            total_opex_usd = operating_cost_SITKANA(self.data.turbine_rated_power, self.data.number_of_turbines)
-        else:
-            total_opex_usd = 0.04 * total_capex
+        return 0.04 * total_capex
+        # if self.data.customer == 'customer_B':  # SITKANA
+        #     total_opex_usd = operating_cost_SITKANA(self.data.turbine_rated_power, self.data.number_of_turbines)
+        # else:
+        #     total_opex_usd = 0.04 * total_capex
 
-        return total_opex_usd
+        # return total_opex_usd
 
     def calculate_lcoe(self):
         """
@@ -296,11 +307,11 @@ class LCOECalculator:
         Raises:
             ValueError: If present value of energy is zero.
         """
-        total_capex = self.calculate_total_capex()
-        total_opex = self.calculate_total_opex(total_capex)
+        adjusted_capex = self.calculate_total_capex()
+        total_opex = self.calculate_total_opex(adjusted_capex)
         annual_energy = self.calculate_annual_energy()
 
-        pvc = total_capex + total_opex * np.sum([1 / (1 + self.data.discount_rate)**t for t in range(1, self.data.lifetime + 1)])
+        pvc = adjusted_capex + total_opex * np.sum([1 / (1 + self.data.discount_rate)**t for t in range(1, self.data.lifetime + 1)])
         pve = annual_energy * np.sum([1 / (1 + self.data.discount_rate)**t for t in range(1, self.data.lifetime + 1)])
 
         if pve == 0:
@@ -316,13 +327,16 @@ class LCOECalculator:
         Raises:
             ValueError: If CAPEX has not been calculated yet.
         """
-        if not self.capex:
+        if self.component_capex_total is None or self.adjusted_capex_total is None:
             raise ValueError("CAPEX has not been calculated yet. Please calculate CAPEX first.")
         
         print("CAPEX Components:")
         for cost_name, cost_value in self.capex.items():
             print(f"  {cost_name}: ${cost_value:.2f}")
-        print(f"Total CAPEX: ${sum(self.capex.values()):.2f}")
+
+        print(f"Total component CAPEX: ${self.component_capex_total:.2f}")
+        print(f"Adjustment factor: {self.adjustment_factor:.2f}")
+        print(f"Adjusted CAPEX: ${self.adjusted_capex_total:.2f}")
 
     def list_opex(self, total_capex):
         """
@@ -345,3 +359,25 @@ class LCOECalculator:
         """
         annual_energy = self.calculate_annual_energy()
         print(f"Annual Energy Generation: {annual_energy:.2f} kWh")
+
+
+    def get_capex_summary(self):
+        """
+        Returns a summary of CAPEX values.
+
+        Returns:
+            dict: Dictionary containing:
+                - component_capex
+                - adjustment_factor
+                - adjusted_capex
+                - capex_items
+        """
+        if self.adjusted_capex_total is None or self.component_capex_total is None:
+            self.calculate_total_capex()
+
+        return {
+            "component_capex": self.component_capex_total,
+            "adjustment_factor": self.adjustment_factor,
+            "adjusted_capex": self.adjusted_capex_total,
+            "capex_items": self.capex.copy(),
+        }
